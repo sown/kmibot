@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "bot"
+version = "0.1.0"
+description = ""
+authors = ["Dan Trickey <git@trickey.io>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+"discord.py" = "^2.1.0"
+pydantic = "^1.10.2"
+tomli = "^2.0.1"
+
+[tool.poetry.group.dev.dependencies]
+isort = "*"
+mypy = "*"
+flake8 = "*"
+flake8-commas = "*"
+flake8-comprehensions = "*"
+flake8-debugger = "*"
+flake8-isort = "*"
+flake8-mutable = "*"
+flake8-todo = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
