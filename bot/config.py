@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 import tomli
@@ -21,7 +21,7 @@ class PubInfo(BaseModel):
 
     name: str
     emoji: str
-    menu_url: HttpUrl | None = None
+    menu_url: Optional[HttpUrl] = None
     map_url: HttpUrl
 
 
