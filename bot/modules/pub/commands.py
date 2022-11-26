@@ -147,16 +147,16 @@ class PubCommand(Group):
 
     @command(description="Announce a spontaneous pub event.")
     async def now(self, interaction: discord.Interaction):
-        pub_time = datetime.utcnow().astimezone(self.config.timezone)
         pub = await self._choose_pub(
             interaction,
-            f"Please choose the pub for {pub_time}",
+            "Please choose the spontaneous pub",
         )
 
+        pub_time = datetime.utcnow().astimezone(self.config.timezone)
         assert interaction.guild is not None
         await interaction.guild.create_scheduled_event(
             name=f"{pub.emoji} Spontaneous Pub {pub.emoji}",
-            start_time=pub_time,
+            start_time=pub_time + timedelta(seconds=1),
             end_time=pub_time + timedelta(hours=3),
             location=pub.name,
             description=self.config.pub.description,
@@ -177,7 +177,8 @@ class PubCommand(Group):
                         f"There is a pub right now: <t:{int(pub_time.timestamp())}:R>",
                         f"It is being held at {pub.emoji} **{pub.name}** {pub.emoji}",
                         "",
-                        "If you are coming, please don't waste time marking 🔔 interest on the event, just go immediately!",
+                        "If you are coming, please don't waste time marking 🔔 interest"
+                        " on the event, just go immediately!",
                     ],
                 ),
                 view=view,
