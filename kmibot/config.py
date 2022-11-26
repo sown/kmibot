@@ -46,7 +46,6 @@ class RoleInfo(BaseModel):
 
     name: str
     colour: str
-    position: int
 
 
 class LicenceType(BaseModel):
@@ -68,6 +67,9 @@ class BotConfig(BaseSettings):
     ferry: FerryConfig
     licence: LicenceConfig
     pub: PubConfig
+
+    class Config:
+        env_nested_delimiter = '__'
 
     @validator("timezone", pre=True)
     def parse_timezone(cls, val: str) -> ZoneInfo:
