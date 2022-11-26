@@ -30,7 +30,9 @@ class PubCommand(Group):
             view=view,
             ephemeral=True,
         )
-        return await view.wait_until_complete()
+        pub = await view.wait_until_complete()
+        LOGGER.info(f"{interaction.user} chose {pub.name}")
+        return pub
 
     def _get_next_pub_time(self) -> datetime:
         now = datetime.utcnow().astimezone(self.config.timezone)
@@ -62,6 +64,32 @@ class PubCommand(Group):
                 return event
         return None
 
+    async def _create_pub_event(
+        self,
+        guild: discord.Guild,
+        pub: PubInfo,
+        start_time: datetime,
+        *,
+        user: str = "A user",
+        title: str = "Pub",
+    ) -> discord.ScheduledEvent:
+        LOGGER.info(f"Creating scheduled event at {start_time}")
+        return await guild.create_scheduled_event(
+            name=f"{pub.emoji} {title} {pub.emoji}",
+            start_time=start_time,
+            end_time=start_time + timedelta(hours=3),
+            location=pub.name,
+            description=self.config.pub.description,
+            reason=f"{user} used the /pub next command",
+        )
+
+    def _get_pub_buttons_view(self, pub: PubInfo) -> discord.ui.View:
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(label="Map", url=pub.map_url))
+        if pub.menu_url:
+            view.add_item(discord.ui.Button(label="Menu", url=pub.menu_url))
+        return view
+
     @command(description="Get information about the pub.")
     async def info(self, interaction: discord.Interaction):
         LOGGER.info(f"{interaction.user} used /pub info")
@@ -85,10 +113,6 @@ class PubCommand(Group):
                     ephemeral=True,
                 )
             else:
-                view = discord.ui.View()
-                view.add_item(discord.ui.Button(label="Map", url=pub.map_url))
-                if pub.menu_url:
-                    view.add_item(discord.ui.Button(label="Menu", url=pub.menu_url))
                 await interaction.response.send_message(
                     "\n".join(
                         [
@@ -99,7 +123,7 @@ class PubCommand(Group):
                             "If you are coming, please mark 🔔 interest on the event!",
                         ],
                     ),
-                    view=view,
+                    view=self._get_pub_buttons_view(pub),
                     ephemeral=True,
                 )
 
@@ -122,24 +146,15 @@ class PubCommand(Group):
             interaction,
             f"Please choose the pub for {pub_time}",
         )
-        LOGGER.info(f"{interaction.user} chose {pub.name}")
-        LOGGER.info(f"Creating scheduled event at {pub_time}")
-        await interaction.guild.create_scheduled_event(
-            name=f"{pub.emoji} Pub {pub.emoji}",
-            start_time=pub_time,
-            end_time=pub_time + timedelta(hours=3),
-            location=pub.name,
-            description=self.config.pub.description,
-            reason=f"{interaction.user} used the /pub next command",
+        await self._create_pub_event(
+            interaction.guild,
+            pub,
+            pub_time,
+            user=interaction.user.name,
         )
 
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
-
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Map", url=pub.map_url))
-        if pub.menu_url:
-            view.add_item(discord.ui.Button(label="Menu", url=pub.menu_url))
 
         LOGGER.info(f"Posting pub info in {pub_channel}")
         await pub_channel.send(
@@ -152,7 +167,7 @@ class PubCommand(Group):
                     "If you are coming, please mark 🔔 interest on the event!",
                 ],
             ),
-            view=view,
+            view=self._get_pub_buttons_view(pub),
         )
 
     @command(description="Announce a spontaneous pub event.")
@@ -162,27 +177,20 @@ class PubCommand(Group):
             interaction,
             "Please choose the spontaneous pub",
         )
-        LOGGER.info(f"{interaction.user} chose {pub.name}")
-
-        pub_time = datetime.utcnow().astimezone(self.config.timezone)
+        now = datetime.utcnow().astimezone(self.config.timezone)
+        pub_time = now + timedelta(seconds=1)
         assert interaction.guild is not None
-        LOGGER.info(f"Creating scheduled event at {pub_time}")
 
-        await interaction.guild.create_scheduled_event(
-            name=f"{pub.emoji} Spontaneous Pub {pub.emoji}",
-            start_time=pub_time + timedelta(seconds=1),
-            end_time=pub_time + timedelta(hours=3),
-            location=pub.name,
-            description=self.config.pub.description,
-            reason=f"{interaction.user} used the /pub now command",
+        await self._create_pub_event(
+            interaction.guild,
+            pub,
+            pub_time,
+            user=interaction.user.name,
+            title="Spontaneous Pub",
         )
 
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Map", url=pub.map_url))
-        if pub.menu_url:
-            view.add_item(discord.ui.Button(label="Menu", url=pub.menu_url))
 
         await pub_channel.send(
             "\n".join(
@@ -195,5 +203,5 @@ class PubCommand(Group):
                     " on the event, just go immediately!",
                 ],
             ),
-            view=view,
+            view=self._get_pub_buttons_view(pub),
         )
