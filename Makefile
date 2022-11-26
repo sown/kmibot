@@ -1,7 +1,7 @@
 .PHONY: all clean lint type isort
 
 CMD:=poetry run
-PYMODULE:=bot
+PYMODULE:=kmibot
 
 all: type lint
 

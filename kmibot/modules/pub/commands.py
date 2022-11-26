@@ -4,7 +4,7 @@ from typing import Optional
 import discord
 from discord.app_commands import Group, command
 
-from bot.config import BotConfig, PubInfo
+from kmibot.config import BotConfig, PubInfo
 
 from .views import PubView
 

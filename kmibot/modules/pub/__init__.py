@@ -4,7 +4,7 @@ from ..module import Module
 from .commands import PubCommand
 
 if TYPE_CHECKING:
-    from bot.client import DiscordClient
+    from kmibot.client import DiscordClient
 
 
 class PubModule(Module):

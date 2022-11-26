@@ -7,7 +7,7 @@ import discord
 from .module import Module
 
 if TYPE_CHECKING:
-    from bot.client import DiscordClient
+    from kmibot.client import DiscordClient
 
 LOGGER = getLogger(__name__)
 

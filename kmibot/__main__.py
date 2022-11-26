@@ -1,6 +1,6 @@
 """Make module executable."""
 
-from bot.app import app
+from kmibot.app import app
 
 if __name__ == "__main__":
     app()

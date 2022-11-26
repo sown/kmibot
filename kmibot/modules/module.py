@@ -2,7 +2,7 @@ from abc import ABCMeta
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bot.client import DiscordClient
+    from kmibot.client import DiscordClient
 
 
 class Module(metaclass=ABCMeta):

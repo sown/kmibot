@@ -3,7 +3,7 @@ from typing import Optional
 
 import discord
 
-from bot.config import PubConfig, PubInfo
+from kmibot.config import PubConfig, PubInfo
 
 
 class PubSelector(discord.ui.Select):
