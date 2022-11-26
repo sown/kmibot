@@ -24,13 +24,14 @@ class FerryModule(Module):
             client.on_message = self.on_message  # type: ignore[attr-defined]
 
     async def on_message(self, message: discord.Message) -> None:
-        ferry_channel = self.client.get_channel(self.client.config.ferry.channel_id)
-        assert isinstance(ferry_channel, discord.TextChannel)
+        self.ferry_channel = self.client.get_channel(self.client.config.ferry.channel_id)
+        assert isinstance(self.ferry_channel, discord.TextChannel)
+
         if self.client.config.ferry.banned_word in message.content:
             LOGGER.info(f"{message.author.display_name} ferried in #{message.channel}")
             for emoji in self.client.config.ferry.emoji_reacts:
                 asyncio.create_task(message.add_reaction(emoji))
 
-            await ferry_channel.send(
+            await self.ferry_channel.send(
                 f"<@{message.author.id}> ferried in <#{message.channel.id}>!",
             )
