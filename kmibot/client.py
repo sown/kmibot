@@ -1,10 +1,12 @@
+import asyncio
 import logging
+from typing import List
 
 import discord
 from discord import app_commands
 
 from .config import BotConfig
-from .modules import MODULES
+from .modules import MODULES, Module
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +20,10 @@ class DiscordClient(discord.Client):
         self.guild = discord.Object(config.discord.guild_id)
         self.tree = app_commands.CommandTree(self)
 
-        self._modules = [module_cls(self) for module_cls in MODULES]
+        self._modules: List[Module] = [
+            module_cls(self)
+            for module_cls in MODULES
+        ]
         LOGGER.info(f"Set up {len(self._modules)} modules")
 
     @property
@@ -43,3 +48,6 @@ class DiscordClient(discord.Client):
             )
         guild = guilds[0]
         LOGGER.info(f"Guild: {guild.name}")
+
+        for module in self._modules:
+            asyncio.create_task(module.on_ready(self))
