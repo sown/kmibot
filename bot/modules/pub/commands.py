@@ -144,3 +144,41 @@ class PubCommand(Group):
                 ),
                 view=view,
             )
+
+    @command(description="Announce a spontaneous pub event.")
+    async def now(self, interaction: discord.Interaction):
+        pub_time = datetime.utcnow().astimezone(self.config.timezone)
+        pub = await self._choose_pub(
+            interaction,
+            f"Please choose the pub for {pub_time}",
+        )
+
+        assert interaction.guild is not None
+        await interaction.guild.create_scheduled_event(
+            name=f"{pub.emoji} Spontaneous Pub {pub.emoji}",
+            start_time=pub_time,
+            end_time=pub_time + timedelta(hours=3),
+            location=pub.name,
+            description=self.config.pub.description,
+            reason=f"{interaction.user} used the /pub now command",
+        )
+
+        if pub_channel := interaction.guild.get_channel(self.config.pub.channel_id):
+            view = discord.ui.View()
+            view.add_item(discord.ui.Button(label="Map", url=pub.map_url))
+            if pub.menu_url:
+                view.add_item(discord.ui.Button(label="Menu", url=pub.menu_url))
+
+            assert isinstance(pub_channel, discord.TextChannel)
+            await pub_channel.send(
+                "\n".join(
+                    [
+                        "**Pub Right Now**",
+                        f"There is a pub right now: <t:{int(pub_time.timestamp())}:R>",
+                        f"It is being held at {pub.emoji} **{pub.name}** {pub.emoji}",
+                        "",
+                        "If you are coming, please don't waste time marking 🔔 interest on the event, just go immediately!",
+                    ],
+                ),
+                view=view,
+            )
