@@ -42,11 +42,31 @@ class FerryConfig(BaseModel):
     emoji_reacts: str
 
 
+class RoleInfo(BaseModel):
+
+    name: str
+    colour: str
+    position: int
+
+
+class LicenceType(BaseModel):
+
+    name: str
+    emoji: str
+    role: Optional[RoleInfo] = None
+
+
+class LicenceConfig(BaseModel):
+
+    licence_types: List[LicenceType]
+
+
 class BotConfig(BaseSettings):
 
     timezone: ZoneInfo
     discord: DiscordConfig
     ferry: FerryConfig
+    licence: LicenceConfig
     pub: PubConfig
 
     @validator("timezone", pre=True)
