@@ -19,6 +19,7 @@ class DiscordClient(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
         self._modules = [module_cls(self) for module_cls in MODULES]
+        LOGGER.info(f"Set up {len(self._modules)} modules")
 
     @property
     def intents(self) -> discord.Intents:
@@ -28,12 +29,17 @@ class DiscordClient(discord.Client):
 
     async def setup_hook(self) -> None:
         # Sync the application command with Discord.
-        await self.tree.sync(guild=self.guild)
+        LOGGER.info("Synchronising app commands")
+        commands = await self.tree.sync(guild=self.guild)
+        for command in commands:
+            LOGGER.info(f"Registered /{command.name}")
 
     async def on_ready(self):
         LOGGER.info(f"Logged on as {self.user}!")
 
         if len(guilds := [guild async for guild in self.fetch_guilds()]) != 1:
-            LOGGER.error(
+            raise RuntimeError(
                 f"Expected to connect to exactly 1 guild, found {len(guilds)}",
             )
+        guild = guilds[0]
+        LOGGER.info(f"Guild: {guild.name}")

@@ -12,6 +12,7 @@ LOGGER = getLogger(__name__)
 
 
 async def run(client: DiscordClient, token: str) -> None:
+    LOGGER.info("Starting client.")
     async with client:
         await client.login(token)
         await client.connect()
@@ -24,20 +25,19 @@ def parse_args() -> argparse.Namespace:
 
 
 def app() -> None:
+    args = parse_args()
     discord.utils.setup_logging()
 
-    args = parse_args()
-
     try:
+        LOGGER.info(f"Loading {args.config}")
         config = BotConfig.load_from_file(Path(args.config))
     except ConfigException as e:
         LOGGER.error("The config file was not valid")
         LOGGER.error(str(e))
         return
 
-    client = DiscordClient(config)
-
     try:
+        client = DiscordClient(config)
         asyncio.run(run(client, config.discord.token))
     except KeyboardInterrupt:
         pass
