@@ -1,4 +1,4 @@
-.PHONY: all clean lint type isort
+.PHONY: all clean lint lint-fix type
 
 CMD:=poetry run
 PYMODULE:=kmibot
@@ -6,13 +6,13 @@ PYMODULE:=kmibot
 all: type lint
 
 lint:
-	$(CMD) flake8 $(PYMODULE)
+	$(CMD) ruff $(PYMODULE)
+
+lint-fix:
+	$(CMD) ruff --fix $(PYMODULE)
 
 type:
 	$(CMD) mypy $(PYMODULE)
-
-isort:
-	$(CMD) isort $(PYMODULE)
 
 clean:
 	git clean -Xdf # Delete all files in .gitignore

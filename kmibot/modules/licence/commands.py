@@ -1,5 +1,4 @@
 from logging import getLogger
-from typing import Optional
 
 import discord
 from discord.app_commands import Group, command
@@ -28,7 +27,7 @@ class LicenceCommand(Group):
         )
         return await view.wait_until_complete()
 
-    def _get_licence(self, member: discord.Member) -> Optional[LicenceType]:
+    def _get_licence(self, member: discord.Member) -> LicenceType | None:
         roles = {role.name: role for role in member.roles}
         for licence in self.config.licence.licence_types:
             if licence.role and licence.role.name in roles:
@@ -38,7 +37,7 @@ class LicenceCommand(Group):
     async def _set_licence(
         self,
         member: discord.Member,
-        licence: Optional[LicenceType],
+        licence: LicenceType | None,
     ) -> None:
         if self._get_licence(member) is licence:
             LOGGER.info(f"Licence is already set to {licence}")
@@ -53,8 +52,8 @@ class LicenceCommand(Group):
             if licence and licence.role:
                 await member.add_roles(roles[licence.role.name])
 
-    @command(description="Get information about your HAM radio licence.")
-    async def info(self, interaction: discord.Interaction):
+    @command(description="Get information about your HAM radio licence.")  # type: ignore[arg-type]
+    async def info(self, interaction: discord.Interaction) -> None:
         LOGGER.info(f"{interaction.user} used /licence info")
         assert isinstance(interaction.user, discord.Member)
 
@@ -71,8 +70,8 @@ class LicenceCommand(Group):
                 ephemeral=True,
             )
 
-    @command(description="Set your HAM radio licence.")
-    async def set(self, interaction: discord.Interaction):
+    @command(description="Set your HAM radio licence.")  # type: ignore[arg-type]
+    async def set(self, interaction: discord.Interaction) -> None:  # noqa: A003
         LOGGER.info(f"{interaction.user} used /licence set")
         assert isinstance(interaction.user, discord.Member)
 

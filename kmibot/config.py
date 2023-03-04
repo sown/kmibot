@@ -1,13 +1,11 @@
 from pathlib import Path
-from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 import tomli
-from pydantic import (BaseModel, BaseSettings, HttpUrl, ValidationError,
-                      parse_obj_as, validator)
+from pydantic import BaseModel, BaseSettings, HttpUrl, ValidationError, parse_obj_as, validator
 
 
-class ConfigException(Exception):
+class ConfigError(Exception):
     """There was a problem with the config file."""
 
 
@@ -21,13 +19,14 @@ class PubInfo(BaseModel):
 
     name: str
     emoji: str
-    menu_url: Optional[HttpUrl] = None
+    menu_url: HttpUrl | None = None
     map_url: HttpUrl
+    fake: int | None = None
 
 
 class PubConfig(BaseModel):
 
-    pubs: List[PubInfo]
+    pubs: list[PubInfo]
     channel_id: int
     description: str
     weekday: int
@@ -52,12 +51,12 @@ class LicenceType(BaseModel):
 
     name: str
     emoji: str
-    role: Optional[RoleInfo] = None
+    role: RoleInfo | None = None
 
 
 class LicenceConfig(BaseModel):
 
-    licence_types: List[LicenceType]
+    licence_types: list[LicenceType]
 
 
 class BotConfig(BaseSettings):
@@ -72,22 +71,22 @@ class BotConfig(BaseSettings):
         env_nested_delimiter = '__'
 
     @validator("timezone", pre=True)
-    def parse_timezone(cls, val: str) -> ZoneInfo:
+    def parse_timezone(cls, val: str) -> ZoneInfo:  # noqa: N805
         return ZoneInfo(val)
 
     @classmethod
-    def load_from_file(cls, path: Path) -> "BotConfig":
+    def load_from_file(cls, path: Path) -> "BotConfig":  # noqa: ANN102
         try:
             with path.open("rb") as fh:
                 data = tomli.load(fh)
-        except FileNotFoundError:
-            raise ConfigException("Unable to find config file")
-        except IOError:
-            raise ConfigException("Unable to read config file.")
+        except FileNotFoundError as e:
+            raise ConfigError("Unable to find config file") from e
+        except OSError as e:
+            raise ConfigError("Unable to read config file.") from e
         except tomli.TOMLDecodeError as e:
-            raise ConfigException(f"Unable to parse TOML: {e}")
+            raise ConfigError(f"Unable to parse TOML: {e}") from e
 
         try:
             return parse_obj_as(cls, data)
         except ValidationError as e:
-            raise ConfigException(f"Config file did not match schema: {e}")
+            raise ConfigError(f"Config file did not match schema: {e}") from e

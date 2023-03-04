@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 import discord
 
@@ -12,7 +11,7 @@ class PubSelector(discord.ui.Select):
         self.prompt = prompt
 
         self.selected = asyncio.Event()
-        self.pub: Optional[PubInfo] = None
+        self.pub: PubInfo | None = None
 
         options = [
             discord.SelectOption(label=pub.name, emoji=pub.emoji)

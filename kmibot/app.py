@@ -6,7 +6,7 @@ from pathlib import Path
 import discord
 
 from .client import DiscordClient
-from .config import BotConfig, ConfigException
+from .config import BotConfig, ConfigError
 
 LOGGER = getLogger(__name__)
 
@@ -31,7 +31,7 @@ def app() -> None:
     try:
         LOGGER.info(f"Loading {args.config}")
         config = BotConfig.load_from_file(Path(args.config))
-    except ConfigException as e:
+    except ConfigError as e:
         LOGGER.error("The config file was not valid")
         LOGGER.error(str(e))
         return

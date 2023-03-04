@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import List
 
 import discord
 from discord import app_commands
@@ -20,7 +19,7 @@ class DiscordClient(discord.Client):
         self.guild = discord.Object(config.discord.guild_id)
         self.tree = app_commands.CommandTree(self)
 
-        self._modules: List[Module] = [
+        self._modules: list[Module] = [
             module_cls(self)
             for module_cls in MODULES
         ]
@@ -39,7 +38,7 @@ class DiscordClient(discord.Client):
         for command in commands:
             LOGGER.info(f"Registered /{command.name}")
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         LOGGER.info(f"Logged on as {self.user}!")
 
         if len(guilds := [guild async for guild in self.fetch_guilds()]) != 1:
