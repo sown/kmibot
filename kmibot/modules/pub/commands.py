@@ -6,6 +6,7 @@ from discord.app_commands import Group, command
 
 from kmibot.config import BotConfig, PubInfo
 
+from .utils import event_is_pub, get_pub_buttons_view
 from .views import PubView
 
 LOGGER = getLogger(__name__)
@@ -16,9 +17,6 @@ class PubCommand(Group):
     def __init__(self, config: BotConfig) -> None:
         super().__init__(name="pub", description="Manage the pub event")
         self.config = config
-
-    def _event_is_pub(self, event: discord.ScheduledEvent) -> bool:
-        return "Pub" in event.name
 
     async def _choose_pub(
         self, interaction: discord.Interaction, prompt: str,
@@ -59,7 +57,7 @@ class PubCommand(Group):
     def _get_next_event(self, guild: discord.Guild) -> discord.ScheduledEvent | None:
         pub_time = self._get_next_pub_time()
         for event in guild.scheduled_events:
-            if self._event_is_pub(event) and event.start_time == pub_time:
+            if event_is_pub(event) and event.start_time == pub_time:
                 return event
         return None
 
@@ -82,13 +80,6 @@ class PubCommand(Group):
             reason=f"{user} used the /pub next command",
         )
 
-    def _get_pub_buttons_view(self, pub: PubInfo) -> discord.ui.View:
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Map", url=pub.map_url))
-        if pub.menu_url:
-            view.add_item(discord.ui.Button(label="Menu", url=pub.menu_url))
-        return view
-
     @command(description="Get information about the pub.")  # type: ignore[arg-type]
     async def info(self, interaction: discord.Interaction) -> None:
         LOGGER.info(f"{interaction.user} used /pub info")
@@ -101,11 +92,7 @@ class PubCommand(Group):
                 ephemeral=True,
             )
         else:
-            pub = discord.utils.find(
-                lambda p: pub_event and p.name == pub_event.location,
-                self.config.pub.pubs,
-            )
-
+            pub = self.config.pub.get_pub_by_name(pub_event.location or "")
             if pub is None:
                 await interaction.response.send_message(
                     f"No information about {pub_event.location}",
@@ -122,7 +109,7 @@ class PubCommand(Group):
                             "If you are coming, please mark 🔔 interest on the event!",
                         ],
                     ),
-                    view=self._get_pub_buttons_view(pub),
+                    view=get_pub_buttons_view(pub),
                     ephemeral=True,
                 )
 
@@ -149,32 +136,26 @@ class PubCommand(Group):
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
 
-        if pub.fake:
-            await pub_channel.send(
-                f"Oi <@{pub.fake}>, can we go to {pub.name} next week?",
-                view=self._get_pub_buttons_view(pub),
-            )
-        else:
-            await self._create_pub_event(
-                interaction.guild,
-                pub,
-                pub_time,
-                user=interaction.user.name,
-            )
+        await self._create_pub_event(
+            interaction.guild,
+            pub,
+            pub_time,
+            user=interaction.user.name,
+        )
 
-            LOGGER.info(f"Posting pub info in {pub_channel}")
-            await pub_channel.send(
-                "\n".join(
-                    [
-                        "**Pub Next Week**",
-                        f"The next pub will be <t:{int(pub_time.timestamp())}:R>",
-                        f"It will be held at {pub.emoji} **{pub.name}** {pub.emoji}",
-                        "",
-                        "If you are coming, please mark 🔔 interest on the event!",
-                    ],
-                ),
-                view=self._get_pub_buttons_view(pub),
-            )
+        LOGGER.info(f"Posting pub info in {pub_channel}")
+        await pub_channel.send(
+            "\n".join(
+                [
+                    "**Pub Next Week**",
+                    f"The next pub will be <t:{int(pub_time.timestamp())}:R>",
+                    f"It will be held at {pub.emoji} **{pub.name}** {pub.emoji}",
+                    "",
+                    "If you are coming, please mark 🔔 interest on the event!",
+                ],
+            ),
+            view=get_pub_buttons_view(pub),
+        )
 
     @command(description="Announce a spontaneous pub event.")  # type: ignore[arg-type]
     async def now(self, interaction: discord.Interaction) -> None:
@@ -190,30 +171,12 @@ class PubCommand(Group):
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
 
-        if pub.fake:
-            await pub_channel.send(
-                f"Oi <@{pub.fake}>, can we go to {pub.name}?",
-                view=self._get_pub_buttons_view(pub),
-            )
-        else:
-            await self._create_pub_event(
-                interaction.guild,
-                pub,
-                pub_time,
-                user=interaction.user.name,
-                title="Spontaneous Pub",
-            )
+        await self._create_pub_event(
+            interaction.guild,
+            pub,
+            pub_time,
+            user=interaction.user.name,
+            title="Spontaneous Pub",
+        )
 
-            await pub_channel.send(
-                "\n".join(
-                    [
-                        "**Pub Right Now**",
-                        f"There is a pub right now: <t:{int(pub_time.timestamp())}:R>",
-                        f"It is being held at {pub.emoji} **{pub.name}** {pub.emoji}",
-                        "",
-                        "If you are coming, please don't waste time marking 🔔 interest"
-                        " on the event, just go immediately!",
-                    ],
-                ),
-                view=self._get_pub_buttons_view(pub),
-            )
+        # A message is posted in the channel by the scheduled event handler

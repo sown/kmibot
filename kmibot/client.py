@@ -50,3 +50,12 @@ class DiscordClient(discord.Client):
 
         for module in self._modules:
             asyncio.create_task(module.on_ready(self))
+
+    async def on_scheduled_event_update(
+            self,
+            old_event: discord.ScheduledEvent,
+            new_event: discord.ScheduledEvent,
+        ) -> None:
+        LOGGER.info(f"Received update for scheduled event: {old_event.name}")
+        for module in self._modules:
+            asyncio.create_task(module.on_scheduled_event_update(self, old_event, new_event))

@@ -1,6 +1,7 @@
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import discord
 import tomli
 from pydantic import BaseModel, BaseSettings, HttpUrl, ValidationError, parse_obj_as, validator
 
@@ -21,7 +22,6 @@ class PubInfo(BaseModel):
     emoji: str
     menu_url: HttpUrl | None = None
     map_url: HttpUrl
-    fake: int | None = None
 
 
 class PubConfig(BaseModel):
@@ -33,6 +33,10 @@ class PubConfig(BaseModel):
     hour: int
     minute: int = 0
 
+    def get_pub_by_name(self, name: str) -> PubInfo | None:
+        return discord.utils.find(
+            lambda p: p.name == name, self.pubs,
+        )
 
 class FerryConfig(BaseModel):
 
@@ -90,3 +94,4 @@ class BotConfig(BaseSettings):
             return parse_obj_as(cls, data)
         except ValidationError as e:
             raise ConfigError(f"Config file did not match schema: {e}") from e
+

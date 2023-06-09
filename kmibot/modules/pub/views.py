@@ -23,9 +23,7 @@ class PubSelector(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        self.pub = discord.utils.find(
-            lambda p: p.name == self.values[0], self._pub_config.pubs,
-        )
+        self.pub = self._pub_config.get_pub_by_name(self.values[0])
         if self.pub:
             await interaction.response.edit_message(
                 content=f"{self.prompt}\n {self.pub.emoji} {self.pub.name} has been selected",  # noqa: E501
