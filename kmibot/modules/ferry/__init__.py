@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import discord
 
-from .module import Module
+from kmibot.modules import Module
 
 if TYPE_CHECKING:
     from kmibot.client import DiscordClient
