@@ -6,6 +6,8 @@ import discord
 
 from kmibot.modules import Module
 
+from .commands import FerryCommand
+
 if TYPE_CHECKING:
     from kmibot.client import DiscordClient
 
@@ -15,6 +17,7 @@ LOGGER = getLogger(__name__)
 class FerryModule(Module):
     def __init__(self, client: "DiscordClient") -> None:
         self.client = client
+        client.tree.add_command(FerryCommand(client.config), guild=client.guild)
 
         if hasattr(client, "on_message"):
             raise RuntimeError(

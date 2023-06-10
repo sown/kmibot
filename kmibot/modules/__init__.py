@@ -1,6 +1,7 @@
+from kmibot.modules.module import Module
+
 from .ferry import FerryModule
 from .licence import LicenceModule
-from .module import Module
 from .pub import PubModule
 from .sown_meeting import SOWNMeetingModule
 
