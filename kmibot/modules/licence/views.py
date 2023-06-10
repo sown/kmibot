@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import discord
 
@@ -11,7 +12,7 @@ class LicenceSelector(discord.ui.Select):
         self.prompt = prompt
 
         self.selected = asyncio.Event()
-        self.pub: LicenceType | None = None
+        self.pub: Optional[LicenceType] = None
 
         options = [
             discord.SelectOption(label=licence.name, emoji=licence.emoji)

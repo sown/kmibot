@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from logging import getLogger
+from typing import Optional
 
 import discord
 from discord.app_commands import Group, command
@@ -54,7 +55,7 @@ class PubCommand(Group):
             tzinfo=self.config.timezone,
         )
 
-    def _get_next_event(self, guild: discord.Guild) -> discord.ScheduledEvent | None:
+    def _get_next_event(self, guild: discord.Guild) -> Optional[discord.ScheduledEvent]:
         pub_time = self._get_next_pub_time()
         for event in guild.scheduled_events:
             if event_is_pub(event) and event.start_time == pub_time:

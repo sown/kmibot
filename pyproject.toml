@@ -18,6 +18,7 @@ mypy = "*"
 types-dateparser = "^1.1.4.9"
 
 [tool.ruff]
+target-version = "py39"
 select = [
     "A",
     "ANN",
@@ -45,6 +46,9 @@ ignore = [
 ]
 
 line-length = 120
+
+[tool.mypy]
+python_version = "3.9"
 
 [build-system]
 requires = ["poetry-core"]

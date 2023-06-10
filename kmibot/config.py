@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 import discord
@@ -20,7 +21,7 @@ class PubInfo(BaseModel):
 
     name: str
     emoji: str
-    menu_url: HttpUrl | None = None
+    menu_url: Optional[HttpUrl] = None
     map_url: HttpUrl
 
 
@@ -33,7 +34,7 @@ class PubConfig(BaseModel):
     hour: int
     minute: int = 0
 
-    def get_pub_by_name(self, name: str) -> PubInfo | None:
+    def get_pub_by_name(self, name: str) -> Optional[PubInfo]:
         return discord.utils.find(
             lambda p: p.name == name, self.pubs,
         )
@@ -55,7 +56,7 @@ class LicenceType(BaseModel):
 
     name: str
     emoji: str
-    role: RoleInfo | None = None
+    role: Optional[RoleInfo] = None
 
 
 class LicenceConfig(BaseModel):

@@ -1,4 +1,5 @@
 from logging import getLogger
+from typing import Optional
 
 import discord
 from discord.app_commands import Group, command
@@ -27,7 +28,7 @@ class LicenceCommand(Group):
         )
         return await view.wait_until_complete()
 
-    def _get_licence(self, member: discord.Member) -> LicenceType | None:
+    def _get_licence(self, member: discord.Member) -> Optional[LicenceType]:
         roles = {role.name: role for role in member.roles}
         for licence in self.config.licence.licence_types:
             if licence.role and licence.role.name in roles:
@@ -37,7 +38,7 @@ class LicenceCommand(Group):
     async def _set_licence(
         self,
         member: discord.Member,
-        licence: LicenceType | None,
+        licence: Optional[LicenceType],
     ) -> None:
         if self._get_licence(member) is licence:
             LOGGER.info(f"Licence is already set to {licence}")
