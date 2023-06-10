@@ -17,7 +17,12 @@ class FerryCommand(Group):
 
     @command(description="Accuse somebody of ferrying.")  # type: ignore[arg-type]
     @describe(member="The criminal you are accusing.", quote="A quote as evidence of the crime.")
-    async def accuse(self, interaction: discord.Interaction, member: discord.Member, quote: Optional[str] = None) -> None:
+    async def accuse(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        quote: Optional[str] = None,
+    ) -> None:
         LOGGER.info(f"{interaction.user} used /ferry accuse")
         lines = [
             f"{member.mention} has been accused by {interaction.user.mention}",
