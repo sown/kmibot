@@ -17,7 +17,8 @@ LOGGER = getLogger(__name__)
 class FerryModule(Module):
     def __init__(self, client: "DiscordClient") -> None:
         self.client = client
-        client.tree.add_command(FerryCommand(client.config), guild=client.guild)
+        self.command_group = FerryCommand(client.config, self)
+        client.tree.add_command(self.command_group, guild=client.guild)
 
         if hasattr(client, "on_message"):
             raise RuntimeError(
@@ -25,6 +26,13 @@ class FerryModule(Module):
             )
         else:
             client.on_message = self.on_message  # type: ignore[attr-defined]
+
+        if hasattr(client, "on_reaction_add"):
+            raise RuntimeError(
+                "Only one module can have on_reaction_add at the moment.",
+            )
+        else:
+            client.on_reaction_add = self.on_reaction_add  # type: ignore[attr-defined]
 
     @property
     def announce_channel(self) -> discord.TextChannel:
@@ -38,8 +46,11 @@ class FerryModule(Module):
         assert isinstance(accuse_channel, discord.TextChannel)
         return accuse_channel
 
+    async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User) -> None:
+        await self.command_group.handle_emoji(reaction, user)
+
     async def on_message(self, message: discord.Message) -> None:
-        if self.client.config.ferry.banned_word in message.content:
+        if message.author != self.client.user and self.client.config.ferry.banned_word in message.content:
             LOGGER.info(f"{message.author.display_name} ferried in #{message.channel}")
             for emoji in self.client.config.ferry.emoji_reacts:
                 asyncio.create_task(message.add_reaction(emoji))

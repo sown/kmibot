@@ -45,6 +45,7 @@ class FerryConfig(BaseModel):
     accusation_channel_id: int
     banned_word: str
     emoji_reacts: str
+    sentences: list[str]
 
 
 class RoleInfo(BaseModel):
