@@ -4,7 +4,8 @@ timezone = "Europe/London"
 guild_id = 1234567890
 
 [ferry]
-channel_id = 1234567890
+announcement_channel_id = 1234567890
+accusation_channel_id = 1234567890
 banned_word = "train"
 emoji_reacts = "🚂😠🚇"
 

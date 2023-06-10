@@ -41,7 +41,8 @@ class PubConfig(BaseModel):
 
 class FerryConfig(BaseModel):
 
-    channel_id: int
+    announcement_channel_id: int
+    accusation_channel_id: int
     banned_word: str
     emoji_reacts: str
 
