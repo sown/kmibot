@@ -1,4 +1,5 @@
 import random
+import re
 from logging import getLogger
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -9,6 +10,8 @@ from kmibot.config import BotConfig
 
 from .types import Accusation
 
+FerryCounts = dict[Union[discord.Member, discord.User], int]
+
 LOGGER = getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -17,19 +20,12 @@ if TYPE_CHECKING:
 FERRY = "⛴️"
 TRAIN = "🚂"
 
-
-def parse_emoji_message(emoji_message: discord.Message) -> dict[Union[discord.Member, discord.User], int]:
-    emoji_lines = emoji_message.content.split("\n")[1:]
-    emoji_lines_counts = [int(e.count(":") / 2) for e in emoji_lines]
-    ferry_counts = {user: count for user, count in zip(emoji_message.mentions, emoji_lines_counts)}
-    return ferry_counts
-
 def ferrify(count: int) -> str:
     if count == 0:
         return ""
     return ":bullettrain_front:" + ":train:"*(count-1)
 
-def build_emoji_message(ferry_counts: dict[Union[discord.Member, discord.User], int]) -> list[str]:
+def build_emoji_message(ferry_counts: FerryCounts) -> list[str]:
     return [f"{user.mention} {ferrify(ferry_count)}" for user, ferry_count in ferry_counts.items()]
 
 
@@ -46,6 +42,18 @@ class FerryCommand(Group):
             "has been accused of a heinous crime by" in message.content,
             message.author == self.ferry_module.client.user,
         ])
+
+    async def parse_emoji_message(self, emoji_message: discord.Message) -> FerryCounts:
+        emoji_lines = emoji_message.content.split("\n")[1:]
+        emoji_lines_counts = [int(e.count(":") / 2) for e in emoji_lines]
+        users_in_message = [
+            await self.ferry_module.client.fetch_user(int(uid))
+            for uid in re.findall(r"<@(\d+)>", emoji_message.content)
+        ]
+        # users_in_message = emoji_message.mentions
+        ferry_counts: FerryCounts = {user: count for user, count in zip(users_in_message, emoji_lines_counts)}
+        return ferry_counts
+
 
     def parse_message_as_accusation(self, message: discord.Message) -> Optional[Accusation]:
         if not self.is_message_accusation(message):
@@ -65,13 +73,13 @@ class FerryCommand(Group):
             accusor=mentions[1],
         )
 
-    async def get_ferry_counts(self) -> dict[Union[discord.Member, discord.User], int]:
+    async def get_ferry_counts(self) -> FerryCounts:
         last_message_id = self.ferry_module.accuse_channel.last_message_id
         ferry_counts = {}
         if last_message_id:
             last_message = await self.ferry_module.accuse_channel.fetch_message(last_message_id)
             if last_message.content.startswith("Bad people:"):
-                ferry_counts = parse_emoji_message(last_message)
+                ferry_counts = await self.parse_emoji_message(last_message)
         return ferry_counts
 
     async def handle_emoji(self, reaction: discord.Reaction, user: discord.User) -> None:
