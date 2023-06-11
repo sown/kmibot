@@ -1,7 +1,7 @@
 import random
 import re
 from logging import getLogger
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import discord
 from discord.app_commands import Group, command, describe
@@ -20,13 +20,19 @@ if TYPE_CHECKING:
 FERRY = "⛴️"
 TRAIN = "🚂"
 
-def ferrify(count: int) -> str:
+FRONT_OF_TRAIN = [":bullettrain_front:", ":bullettrain_side:", ":steam_locomotive:", ":light_rail:"]
+TRAIN_PARTS = [":train:", ":railway_car:"]
+
+def ferrify(count: int, seed: Optional[Any] = None) -> str:
     if count == 0:
         return ""
-    return ":bullettrain_front:" + ":train:"*(count-1)
+
+    ra = random.Random(x=seed)
+    train = [ra.choice(FRONT_OF_TRAIN)] + ra.choices(TRAIN_PARTS, k=count-1)
+    return "".join(train)
 
 def build_emoji_message(ferry_counts: FerryCounts) -> list[str]:
-    return [f"{user.mention} {ferrify(ferry_count)}" for user, ferry_count in ferry_counts.items()]
+    return [f"{user.mention} {ferrify(ferry_count, user.id)}" for user, ferry_count in ferry_counts.items()]
 
 
 class FerryCommand(Group):
@@ -104,19 +110,22 @@ class FerryCommand(Group):
             await self.record_crime(accusation.criminal)
             return
 
-        elif user == accusation.criminal:
-            await user.send("sadist.")
-            # Yeah no return here go away
-
         LOGGER.info(f"{user} has voted on an accusation.")
         if sum(r.count for r in reaction.message.reactions) == 3:
+            #If the user found themselves guilty, remove the react.
+            # if user == accusation.criminal:
+            #     LOGGER.info("Removing initial reaction from criminal")
+            #     await reaction.remove(user)
+            #     return
+
+            LOGGER.info("The accusation is ratified.")
             sentence = random.choice(self.ferry_module.client.config.ferry.sentences)
             lines = [
                 f"The accusation has been ratified by {user.mention}",
                 "",
                 f"{accusation.criminal.mention} has been sentenced to {sentence}",
             ]
-            await reaction.message.channel.send("\n".join(lines))
+            await reaction.message.channel.send("\n".join(lines), reference=reaction.message)
             await reaction.message.add_reaction("🚨")
 
             await self.record_crime(accusation.criminal)
@@ -142,6 +151,8 @@ class FerryCommand(Group):
         ]
         if quote:
             lines.extend(["", f"> {quote}"])
+
+        lines.extend(["", f"Please vote on whether {criminal.mention} is guilty using the emojis below."])
 
         # Publish the accusation
         message = await self.ferry_module.announce_channel.send("\n".join(lines))
