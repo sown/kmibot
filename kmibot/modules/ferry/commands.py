@@ -131,6 +131,24 @@ class FerryCommand(Group):
 
         await self.ferry_module.accuse_channel.send("\n".join(["Bad people:"] + build_emoji_message(ferry_counts)))
 
+    async def publish_accusation(
+            self,
+            criminal: Union[discord.User, discord.Member],
+            accuser: Union[discord.User, discord.ClientUser, discord.Member],
+            quote: Optional[str],
+        ) -> None:
+        lines = [
+            f"{criminal.mention} has been accused of a heinous crime by {accuser.mention}",
+        ]
+        if quote:
+            lines.extend(["", f"> {quote}"])
+
+        # Publish the accusation
+        message = await self.ferry_module.announce_channel.send("\n".join(lines))
+
+        await message.add_reaction(FERRY)
+        await message.add_reaction(TRAIN)
+
     @command(description="Accuse somebody of ferrying.")  # type: ignore[arg-type]
     @describe(member="The criminal you are accusing.", quote="A quote as evidence of the crime.")
     async def accuse(
@@ -145,15 +163,5 @@ class FerryCommand(Group):
             await interaction.response.send_message("Who watches the watchman?", ephemeral=True)
             return
 
-        lines = [
-            f"{member.mention} has been accused of a heinous crime by {interaction.user.mention}",
-        ]
-        if quote:
-            lines.extend(["", f"> {quote}"])
         await interaction.response.send_message("ok", ephemeral=True)
-
-        # Publish the accusation
-        message = await self.ferry_module.announce_channel.send("\n".join(lines))
-
-        await message.add_reaction(FERRY)
-        await message.add_reaction(TRAIN)
+        await self.publish_accusation(member, interaction.user, quote)

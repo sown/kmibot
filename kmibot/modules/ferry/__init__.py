@@ -50,11 +50,14 @@ class FerryModule(Module):
         await self.command_group.handle_emoji(reaction, user)
 
     async def on_message(self, message: discord.Message) -> None:
+        assert self.client.user
         if message.author != self.client.user and self.client.config.ferry.banned_word in message.content:
             LOGGER.info(f"{message.author.display_name} ferried in #{message.channel}")
             for emoji in self.client.config.ferry.emoji_reacts:
                 asyncio.create_task(message.add_reaction(emoji))
 
-            await self.announce_channel.send(
-                f"<@{message.author.id}> ferried in <#{message.channel.id}>!",
+            await self.command_group.publish_accusation(
+                message.author,
+                self.client.user,
+                quote=message.content,
             )
