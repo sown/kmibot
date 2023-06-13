@@ -7,6 +7,7 @@ import discord
 from kmibot.modules import Module
 
 from .commands import FerryCommand
+from .modals import AccuseModal
 
 if TYPE_CHECKING:
     from kmibot.client import DiscordClient
@@ -19,6 +20,7 @@ class FerryModule(Module):
         self.client = client
         self.command_group = FerryCommand(client.config, self)
         client.tree.add_command(self.command_group, guild=client.guild)
+        client.tree.context_menu(name="Accuse of Ferrying", guild=client.guild)(self.accuse_context_menu)
 
         if hasattr(client, "on_message"):
             raise RuntimeError(
@@ -61,3 +63,6 @@ class FerryModule(Module):
                 self.client.user,
                 quote=message.content,
             )
+
+    async def accuse_context_menu(self, interaction: discord.Interaction, member: discord.Member) -> None:
+        await interaction.response.send_modal(AccuseModal(self, criminal=member))
