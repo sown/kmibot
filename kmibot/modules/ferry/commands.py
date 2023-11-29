@@ -85,9 +85,12 @@ class FerryCommand(Group):
 
     async def get_ferry_counts(self) -> FerryCounts:
         last_message_id = self.ferry_module.accuse_channel.last_message_id
-        ferry_counts = {}
-        if last_message_id:
-            last_message = await self.ferry_module.accuse_channel.fetch_message(last_message_id)
+        ferry_counts: FerryCounts = {}
+        if last_message_id is not None:
+            try:
+                last_message = await self.ferry_module.accuse_channel.fetch_message(last_message_id)
+            except discord.errors.NotFound:
+                return ferry_counts
             if last_message.content.startswith("Bad people:"):
                 ferry_counts = await self.parse_emoji_message(last_message)
         return ferry_counts
