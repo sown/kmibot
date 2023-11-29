@@ -20,7 +20,7 @@ async def run(client: DiscordClient, token: str) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', "--config", type=str, default="config.toml")
+    parser.add_argument("-c", "--config", type=str, default="config.toml")
     return parser.parse_args()
 
 

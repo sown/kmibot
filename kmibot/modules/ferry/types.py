@@ -5,7 +5,6 @@ import discord
 
 
 class Accusation(NamedTuple):
-
     timestamp: datetime
     criminal: Union[discord.Member, discord.User]
     accusor: Union[discord.Member, discord.User]

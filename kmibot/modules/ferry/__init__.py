@@ -20,7 +20,9 @@ class FerryModule(Module):
         self.client = client
         self.command_group = FerryCommand(client.config, self)
         client.tree.add_command(self.command_group, guild=client.guild)
-        client.tree.context_menu(name="Accuse of Ferrying", guild=client.guild)(self.accuse_context_menu)
+        client.tree.context_menu(name="Accuse of Ferrying", guild=client.guild)(
+            self.accuse_context_menu
+        )
 
         if hasattr(client, "on_message"):
             raise RuntimeError(
@@ -53,7 +55,10 @@ class FerryModule(Module):
 
     async def on_message(self, message: discord.Message) -> None:
         assert self.client.user
-        if message.author != self.client.user and self.client.config.ferry.banned_word in message.content:
+        if (
+            message.author != self.client.user
+            and self.client.config.ferry.banned_word in message.content
+        ):
             LOGGER.info(f"{message.author.display_name} ferried in #{message.channel}")
             for emoji in self.client.config.ferry.emoji_reacts:
                 asyncio.create_task(message.add_reaction(emoji))
@@ -64,5 +69,7 @@ class FerryModule(Module):
                 quote=message.content,
             )
 
-    async def accuse_context_menu(self, interaction: discord.Interaction, member: discord.Member) -> None:
+    async def accuse_context_menu(
+        self, interaction: discord.Interaction, member: discord.Member
+    ) -> None:
         await interaction.response.send_modal(AccuseModal(self, criminal=member))

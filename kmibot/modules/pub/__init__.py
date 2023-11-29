@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+
 class PubModule(Module):
     def __init__(self, client: "DiscordClient") -> None:
         client.tree.add_command(PubCommand(client.config), guild=client.guild)
@@ -51,9 +52,14 @@ class PubModule(Module):
                     view=get_pub_buttons_view(pub),
                 )
             else:
-                LOGGER.warning(f"A pub event started, but the name was not a known pub: {new_event.location}")
+                LOGGER.warning(
+                    f"A pub event started, but the name was not a known pub: {new_event.location}"
+                )
 
-        if old_event.status is not EventStatus.completed and new_event.status is EventStatus.completed:
+        if (
+            old_event.status is not EventStatus.completed
+            and new_event.status is EventStatus.completed
+        ):
             # The Pub has ended.
             LOGGER.info("A pub event has ended.")
             await self.pub_channel.send(

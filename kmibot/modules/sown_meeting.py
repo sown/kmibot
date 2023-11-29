@@ -16,17 +16,24 @@ LOGGER = getLogger(__name__)
 
 
 @app_commands.command(  # type: ignore[arg-type]
-    name="sown_meeting", description="Create and announce a SOWN meeting event",
+    name="sown_meeting",
+    description="Create and announce a SOWN meeting event",
 )
 @app_commands.describe(
-    meeting_type="Type of SOWN Meeting", datetime="Date and Time of Meeting", location="Location of the Meeting",
+    meeting_type="Type of SOWN Meeting",
+    datetime="Date and Time of Meeting",
+    location="Location of the Meeting",
 )
-@app_commands.choices(meeting_type=[
-    app_commands.Choice(name="Workshop", value="workshop"),  # TODO: Do not hardcode these, use values in config
-    app_commands.Choice(name="Meeting", value="meeting"),
-    app_commands.Choice(name="Outing", value="outing"),
-    app_commands.Choice(name="Social", value="social"),
-])
+@app_commands.choices(
+    meeting_type=[
+        app_commands.Choice(
+            name="Workshop", value="workshop"
+        ),  # TODO: Do not hardcode these, use values in config
+        app_commands.Choice(name="Meeting", value="meeting"),
+        app_commands.Choice(name="Outing", value="outing"),
+        app_commands.Choice(name="Social", value="social"),
+    ]
+)
 async def create_sown_meeting_command(
     interaction: discord.Interaction,
     meeting_type: app_commands.Choice[str],
@@ -34,11 +41,15 @@ async def create_sown_meeting_command(
     location: str,
 ) -> None:
     if (dt := dateparser.parse(datetime)) is None:
-        await interaction.response.send_message("I don't understand that date format. :(", ephemeral=True)
+        await interaction.response.send_message(
+            "I don't understand that date format. :(", ephemeral=True
+        )
         return
 
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=ZoneInfo("Europe/London"))  # TODO: Do not hardcode this, use the value in config
+        dt = dt.replace(
+            tzinfo=ZoneInfo("Europe/London")
+        )  # TODO: Do not hardcode this, use the value in config
 
     LOGGER.info(f"Creating scheduled event at {dt}")
     assert interaction.guild

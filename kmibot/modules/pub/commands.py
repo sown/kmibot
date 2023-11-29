@@ -14,13 +14,14 @@ LOGGER = getLogger(__name__)
 
 
 class PubCommand(Group):
-
     def __init__(self, config: BotConfig) -> None:
         super().__init__(name="pub", description="Manage the pub event")
         self.config = config
 
     async def _choose_pub(
-        self, interaction: discord.Interaction, prompt: str,
+        self,
+        interaction: discord.Interaction,
+        prompt: str,
     ) -> PubInfo:
         view = PubView(self.config.pub, prompt)
         await interaction.response.send_message(

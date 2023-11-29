@@ -7,7 +7,6 @@ if TYPE_CHECKING:
 
 
 class Module:
-
     def __init__(self, client: "DiscordClient") -> None:
         pass
 

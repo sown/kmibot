@@ -11,7 +11,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DiscordClient(discord.Client):
-
     def __init__(self, config: BotConfig) -> None:
         super().__init__(intents=self.intents)
 
@@ -19,10 +18,7 @@ class DiscordClient(discord.Client):
         self.guild = discord.Object(config.discord.guild_id)
         self.tree = app_commands.CommandTree(self)
 
-        self._modules: list[Module] = [
-            module_cls(self)
-            for module_cls in MODULES
-        ]
+        self._modules: list[Module] = [module_cls(self) for module_cls in MODULES]
         LOGGER.info(f"Set up {len(self._modules)} modules")
 
     @property
@@ -52,10 +48,10 @@ class DiscordClient(discord.Client):
             asyncio.create_task(module.on_ready(self))
 
     async def on_scheduled_event_update(
-            self,
-            old_event: discord.ScheduledEvent,
-            new_event: discord.ScheduledEvent,
-        ) -> None:
+        self,
+        old_event: discord.ScheduledEvent,
+        new_event: discord.ScheduledEvent,
+    ) -> None:
         LOGGER.info(f"Received update for scheduled event: {old_event.name}")
         for module in self._modules:
             asyncio.create_task(module.on_scheduled_event_update(self, old_event, new_event))

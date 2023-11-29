@@ -14,13 +14,13 @@ class PubSelector(discord.ui.Select):
         self.selected = asyncio.Event()
         self.pub: Optional[PubInfo] = None
 
-        options = [
-            discord.SelectOption(label=pub.name, emoji=pub.emoji)
-            for pub in pub_config.pubs
-        ]
+        options = [discord.SelectOption(label=pub.name, emoji=pub.emoji) for pub in pub_config.pubs]
 
         super().__init__(
-            placeholder="Choose a pub...", min_values=1, max_values=1, options=options,
+            placeholder="Choose a pub...",
+            min_values=1,
+            max_values=1,
+            options=options,
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:

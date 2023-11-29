@@ -13,13 +13,11 @@ class ConfigError(Exception):
 
 
 class DiscordConfig(BaseModel):
-
     token: str
     guild_id: int
 
 
 class PubInfo(BaseModel):
-
     name: str
     emoji: str
     menu_url: Optional[HttpUrl] = None
@@ -27,7 +25,6 @@ class PubInfo(BaseModel):
 
 
 class PubConfig(BaseModel):
-
     pubs: list[PubInfo]
     channel_id: int
     description: str
@@ -37,11 +34,12 @@ class PubConfig(BaseModel):
 
     def get_pub_by_name(self, name: str) -> Optional[PubInfo]:
         return discord.utils.find(
-            lambda p: p.name == name, self.pubs,
+            lambda p: p.name == name,
+            self.pubs,
         )
 
-class FerryConfig(BaseModel):
 
+class FerryConfig(BaseModel):
     announcement_channel_id: int
     accusation_channel_id: int
     banned_word: str
@@ -50,20 +48,18 @@ class FerryConfig(BaseModel):
 
 
 class RoleInfo(BaseModel):
-
     name: str
     colour: str
 
 
 class BotConfig(BaseSettings):
-
     timezone: ZoneInfo
     discord: DiscordConfig
     ferry: FerryConfig
     pub: PubConfig
 
     class Config:
-        env_nested_delimiter = '__'
+        env_nested_delimiter = "__"
 
     @validator("timezone", pre=True)
     def parse_timezone(cls, val: str) -> ZoneInfo:  # noqa: N805
@@ -85,4 +81,3 @@ class BotConfig(BaseSettings):
             return cls.model_validate(data)
         except ValidationError as e:
             raise ConfigError(f"Config file did not match schema: {e}") from e
-
