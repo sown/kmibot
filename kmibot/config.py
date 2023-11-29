@@ -54,24 +54,11 @@ class RoleInfo(BaseModel):
     colour: str
 
 
-class LicenceType(BaseModel):
-
-    name: str
-    emoji: str
-    role: Optional[RoleInfo] = None
-
-
-class LicenceConfig(BaseModel):
-
-    licence_types: list[LicenceType]
-
-
 class BotConfig(BaseSettings):
 
     timezone: ZoneInfo
     discord: DiscordConfig
     ferry: FerryConfig
-    licence: LicenceConfig
     pub: PubConfig
 
     class Config:

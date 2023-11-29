@@ -15,25 +15,6 @@ hour = 20
 channel_id = 1234567890
 description = "Casual chat and food. All welcome."
 
-[[licence.licence_types]]
-name = "Full"
-role = {name = "Full Licence", colour = "#000000"}
-emoji = "📡"
-
-[[licence.licence_types]]
-name = "Intermediate"
-role = {name = "Intermediate Licence", colour = "#000000"}
-emoji = "🎙️"
-
-[[licence.licence_types]]
-name = "Foundation"
-role = {name = "Foundation Licence", colour = "#000000"}
-emoji = "📻"
-
-[[licence.licence_types]]
-name = "No Licence"
-emoji = "📵"
-
 [[pub.pubs]]
 name = "The Fleming Arms"
 emoji = "🦾"
