@@ -26,6 +26,7 @@ class PubInfo(BaseModel):
 
 class PubConfig(BaseModel):
     pubs: list[PubInfo]
+    supplemental_emoji: str = "🍺"
     channel_id: int
     description: str
     weekday: int

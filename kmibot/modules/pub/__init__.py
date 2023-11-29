@@ -6,7 +6,7 @@ from discord import EventStatus
 
 from ..module import Module
 from .commands import PubCommand
-from .utils import get_pub_buttons_view
+from .utils import event_is_pub, get_pub_buttons_view
 
 if TYPE_CHECKING:
     from kmibot.client import DiscordClient
@@ -25,7 +25,7 @@ class PubModule(Module):
         old_event: discord.ScheduledEvent,
         new_event: discord.ScheduledEvent,
     ) -> None:
-        if "Pub" in new_event.name:
+        if event_is_pub(new_event):
             await self.handle_pub_event_change(client, old_event, new_event)
 
     async def handle_pub_event_change(

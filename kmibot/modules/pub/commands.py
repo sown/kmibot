@@ -74,7 +74,7 @@ class PubCommand(Group):
     ) -> discord.ScheduledEvent:
         LOGGER.info(f"Creating scheduled event at {start_time}")
         return await guild.create_scheduled_event(
-            name=f"{pub.emoji} {title} {pub.emoji}",
+            name=f"{pub.emoji} {title} {self.config.pub.supplemental_emoji}",
             start_time=start_time,
             end_time=start_time + timedelta(hours=3),
             entity_type=discord.EntityType.external,
@@ -115,12 +115,13 @@ class PubCommand(Group):
         )
 
         LOGGER.info(f"Posting pub info in {pub_channel}")
+        formatted_pub_name = f"{pub.emoji} **{pub.name}** {self.config.pub.supplemental_emoji}"
         await pub_channel.send(
             "\n".join(
                 [
                     "**Pub Next Week**",
                     f"The next pub will be <t:{int(pub_time.timestamp())}:R>",
-                    f"It will be held at {pub.emoji} **{pub.name}** {pub.emoji}",
+                    f"It will be held at {formatted_pub_name}",
                     "",
                     "If you are coming, please mark 🔔 interest on the event!",
                 ],
