@@ -123,7 +123,7 @@ class FerryCommand(Group):
                 extra_messages=[
                     "Unfortunately, due to fraud, let's try that again...",
                     "",
-                ]
+                ],
             )
             return
 
