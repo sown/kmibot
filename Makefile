@@ -1,9 +1,15 @@
-.PHONY: all clean lint lint-fix type
+.PHONY: all clean format format-check lint lint-fix type
 
 CMD:=poetry run
 PYMODULE:=kmibot
 
-all: type lint
+all: type format lint
+
+format:
+	$(CMD) ruff format $(PYMODULE)
+
+format-check:
+	$(CMD) ruff format --check $(PYMODULE)
 
 lint:
 	$(CMD) ruff $(PYMODULE)
