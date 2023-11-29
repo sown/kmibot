@@ -84,39 +84,6 @@ class PubCommand(Group):
             reason=f"{user} used the /pub next command",
         )
 
-    @command(description="Get information about the pub.")  # type: ignore[arg-type]
-    async def info(self, interaction: discord.Interaction) -> None:
-        LOGGER.info(f"{interaction.user} used /pub info")
-        assert interaction.guild is not None
-        pub_event = self._get_next_event(interaction.guild)
-        if pub_event is None:
-            LOGGER.info("There is no scheduled pub.")
-            await interaction.response.send_message(
-                "There is no pub scheduled",
-                ephemeral=True,
-            )
-        else:
-            pub = self.config.pub.get_pub_by_name(pub_event.location or "")
-            if pub is None:
-                await interaction.response.send_message(
-                    f"No information about {pub_event.location}",
-                    ephemeral=True,
-                )
-            else:
-                await interaction.response.send_message(
-                    "\n".join(
-                        [
-                            "**Pub Next Week**",
-                            f"The next pub will be <t:{int(pub_event.start_time.timestamp())}:R>",  # noqa: E501
-                            f"It will be held at {pub.emoji} **{pub.name}** {pub.emoji}",
-                            "",
-                            "If you are coming, please mark 🔔 interest on the event!",
-                        ],
-                    ),
-                    view=get_pub_buttons_view(pub),
-                    ephemeral=True,
-                )
-
     @command(description="Select the pub for next week.")  # type: ignore[arg-type]
     async def next(self, interaction: discord.Interaction) -> None:  # noqa: A003
         LOGGER.info(f"{interaction.user} used /pub next")
