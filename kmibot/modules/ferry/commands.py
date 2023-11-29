@@ -8,6 +8,7 @@ from discord.app_commands import Group, command, describe
 
 from kmibot.config import BotConfig
 
+from .modals import AccuseModal
 from .types import Accusation
 
 FerryCounts = dict[Union[discord.Member, discord.User], int]
@@ -49,7 +50,6 @@ class FerryCommand(Group):
     def is_message_accusation(self, message: discord.Message) -> bool:
         return all(
             [
-                # 0 < len(message.mentions) < 3,  # ??
                 "has been accused of a heinous crime by" in message.content,
                 message.author == self.ferry_module.client.user,
             ]
@@ -113,18 +113,22 @@ class FerryCommand(Group):
         if user == accusation.accusor:
             await user.send("You cannot do that. Nice try though.")
             await user.send("Also, I'm telling on you.")
+            await reaction.message.add_reaction("🧑‍⚖️")
 
             await self.record_crime(accusation.criminal)
+            await self.publish_accusation(
+                accusation.criminal,
+                accusation.accusor,
+                quote=None,  # Too much effort to parse.
+                extra_messages=[
+                    "Unfortunately, due to fraud, let's try that again...",
+                    "",
+                ]
+            )
             return
 
         LOGGER.info(f"{user} has voted on an accusation.")
         if sum(r.count for r in reaction.message.reactions) == 3:
-            # If the user found themselves guilty, remove the react.
-            # if user == accusation.criminal:
-            #     LOGGER.info("Removing initial reaction from criminal")
-            #     await reaction.remove(user)
-            #     return
-
             LOGGER.info("The accusation is ratified.")
             sentence = random.choice(self.ferry_module.client.config.ferry.sentences)  # noqa: S311
             lines = [
@@ -154,8 +158,11 @@ class FerryCommand(Group):
         criminal: Union[discord.User, discord.Member],
         accuser: Union[discord.User, discord.ClientUser, discord.Member],
         quote: Optional[str],
+        *,
+        extra_messages: list[str] | None = None,
     ) -> None:
-        lines = [
+        initial = extra_messages or []
+        lines = initial + [
             f"{criminal.mention} has been accused of a heinous crime by {accuser.mention}",
         ]
         if quote:
@@ -172,12 +179,11 @@ class FerryCommand(Group):
         await message.add_reaction(TRAIN)
 
     @command(description="Accuse somebody of ferrying.")  # type: ignore[arg-type]
-    @describe(member="The criminal you are accusing.", quote="A quote as evidence of the crime.")
+    @describe(member="The criminal you are accusing.")
     async def accuse(
         self,
         interaction: discord.Interaction,
         member: discord.Member,
-        quote: Optional[str] = None,
     ) -> None:
         LOGGER.info(f"{interaction.user} used /ferry accuse")
 
@@ -185,5 +191,4 @@ class FerryCommand(Group):
             await interaction.response.send_message("Who watches the watchman?", ephemeral=True)
             return
 
-        await interaction.response.send_message("ok", ephemeral=True)
-        await self.publish_accusation(member, interaction.user, quote)
+        await interaction.response.send_modal(AccuseModal(self.ferry_module, criminal=member))

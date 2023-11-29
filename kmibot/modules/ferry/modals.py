@@ -28,4 +28,7 @@ class AccuseModal(discord.ui.Modal):
             interaction.user,
             quote=self.evidence,
         )
-        await interaction.response.send_message("ok", ephemeral=True)
+        await interaction.response.send_message(
+            "The crime has been submitted for a public trial. You are not allowed to ratify it.",
+            ephemeral=True,
+        )
