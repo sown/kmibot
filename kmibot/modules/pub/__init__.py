@@ -17,6 +17,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PubModule(Module):
     def __init__(self, client: "DiscordClient") -> None:
+        self.client = client
         client.tree.add_command(PubCommand(client.config), guild=client.guild)
 
     async def on_scheduled_event_update(
@@ -42,11 +43,14 @@ class PubModule(Module):
             LOGGER.info("A pub event has started.")
             pub = client.config.pub.get_pub_by_name(new_event.location or "")
             if pub:
+                formatted_pub_name = (
+                    f"{pub.emoji} **{pub.name}** {self.client.config.pub.supplemental_emoji}"
+                )
                 await self.pub_channel.send(
                     "\n".join(
                         [
                             "**Pub-O-Clock**",
-                            f"We are at {pub.emoji} **{pub.name}** {pub.emoji}",
+                            f"We are at {formatted_pub_name}",
                         ],
                     ),
                     view=get_pub_buttons_view(pub),
