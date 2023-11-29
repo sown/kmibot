@@ -43,7 +43,7 @@ class PubCommand(Group):
             # The pub has not yet happened
             monday = today - timedelta(days=today.weekday())
         else:
-            # The pub has already happened, look at next week
+            # The pub has already started or happened, look at next week
             monday = today + timedelta(days=7 - today.weekday())
         pubday = monday + timedelta(days=self.config.pub.weekday)
 
@@ -77,6 +77,8 @@ class PubCommand(Group):
             name=f"{pub.emoji} {title} {pub.emoji}",
             start_time=start_time,
             end_time=start_time + timedelta(hours=3),
+            entity_type=discord.EntityType.external,
+            privacy_level=discord.PrivacyLevel.guild_only,
             location=pub.name,
             description=self.config.pub.description,
             reason=f"{user} used the /pub next command",

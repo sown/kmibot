@@ -57,6 +57,8 @@ async def create_sown_meeting_command(
         name=f"SOWN {meeting_type.name}",
         start_time=dt,
         end_time=dt + timedelta(hours=3),
+        entity_type=discord.EntityType.external,
+        privacy_level=discord.PrivacyLevel.guild_only,
         location=location,
         description=f"SOWN {meeting_type.name} at {location}",
         reason=f"{interaction.user} used the /sown_meeting command",
