@@ -7,15 +7,16 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-"discord.py" = "^2.1.0"
-pydantic = "^1.10.2"
+dateparser = "^1.2.0"
+"discord.py" = "^2.3.2"
+pydantic = "^2.5"
+pydantic-settings = "^2.1.0"
 tomli = "^2.0.1"
-dateparser = "^1.1.8"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1"
 mypy = "^1"
-types-dateparser = "^1.1.4.9"
+types-dateparser = "^1.1.4.10"
 
 [tool.ruff]
 target-version = "py39"

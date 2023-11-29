@@ -4,7 +4,8 @@ from zoneinfo import ZoneInfo
 
 import discord
 import tomli
-from pydantic import BaseModel, BaseSettings, HttpUrl, ValidationError, parse_obj_as, validator
+from pydantic import BaseModel, HttpUrl, ValidationError, validator
+from pydantic_settings import BaseSettings
 
 
 class ConfigError(Exception):
@@ -81,7 +82,7 @@ class BotConfig(BaseSettings):
             raise ConfigError(f"Unable to parse TOML: {e}") from e
 
         try:
-            return parse_obj_as(cls, data)
+            return cls.model_validate(data)
         except ValidationError as e:
             raise ConfigError(f"Config file did not match schema: {e}") from e
 
