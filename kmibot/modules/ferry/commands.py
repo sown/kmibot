@@ -56,8 +56,7 @@ class FerryCommand(Group):
             await self.ferry_module.client.fetch_user(int(uid))
             for uid in re.findall(r"<@(\d+)>", emoji_message.content)
         ]
-        # users_in_message = emoji_message.mentions
-        ferry_counts: FerryCounts = {user: count for user, count in zip(users_in_message, emoji_lines_counts)}
+        ferry_counts: FerryCounts = dict(zip(users_in_message, emoji_lines_counts))
         return ferry_counts
 
 
@@ -119,7 +118,7 @@ class FerryCommand(Group):
             #     return
 
             LOGGER.info("The accusation is ratified.")
-            sentence = random.choice(self.ferry_module.client.config.ferry.sentences)
+            sentence = random.choice(self.ferry_module.client.config.ferry.sentences)  # noqa: S311
             lines = [
                 f"The accusation has been ratified by {user.mention}",
                 "",

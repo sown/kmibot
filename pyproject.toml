@@ -13,8 +13,8 @@ tomli = "^2.0.1"
 dateparser = "^1.1.8"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "*"
-mypy = "*"
+ruff = "^0.1"
+mypy = "^1"
 types-dateparser = "^1.1.4.9"
 
 [tool.ruff]
