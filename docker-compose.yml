@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kmibot
+    restart: always
+    volumes:
+      - type: bind
+        source: ./config.toml
+        target: /config.toml
+        read_only: true
