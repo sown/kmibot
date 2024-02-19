@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from logging import getLogger
 from typing import TYPE_CHECKING
@@ -5,6 +7,7 @@ from typing import TYPE_CHECKING
 import discord
 
 from kmibot.modules import Module
+from kmibot.modules.ferry.api import FerryAPI
 
 from .commands import FerryCommand
 from .modals import AccuseModal
@@ -16,9 +19,10 @@ LOGGER = getLogger(__name__)
 
 
 class FerryModule(Module):
-    def __init__(self, client: "DiscordClient") -> None:
+    def __init__(self, client: DiscordClient) -> None:
         self.client = client
         self.command_group = FerryCommand(client.config, self)
+        self.api_client = FerryAPI(client.config.ferry.api_url, client.config.ferry.api_key)
         client.tree.add_command(self.command_group, guild=client.guild)
         client.tree.context_menu(name="Accuse of Ferrying", guild=client.guild)(
             self.accuse_context_menu
@@ -39,19 +43,17 @@ class FerryModule(Module):
             client.on_reaction_add = self.on_reaction_add  # type: ignore[attr-defined]
 
     @property
-    def announce_channel(self) -> discord.TextChannel:
-        announce_channel = self.client.get_channel(self.client.config.ferry.announcement_channel_id)
-        assert isinstance(announce_channel, discord.TextChannel)
-        return announce_channel
+    def channel(self) -> discord.TextChannel:
+        channel = self.client.get_channel(self.client.config.ferry.channel_id)
+        assert isinstance(channel, discord.TextChannel)
+        return channel
 
-    @property
-    def accuse_channel(self) -> discord.TextChannel:
-        accuse_channel = self.client.get_channel(self.client.config.ferry.accusation_channel_id)
-        assert isinstance(accuse_channel, discord.TextChannel)
-        return accuse_channel
+    async def on_ready(self, client: DiscordClient) -> None:
+        user = await self.api_client.get_current_user()
+        LOGGER.info(f"Authenticated to Ferry API as {user.username}")
 
     async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User) -> None:
-        await self.command_group.handle_emoji(reaction, user)
+        pass
 
     async def on_message(self, message: discord.Message) -> None:
         assert self.client.user

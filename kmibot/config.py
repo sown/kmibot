@@ -41,16 +41,11 @@ class PubConfig(BaseModel):
 
 
 class FerryConfig(BaseModel):
-    announcement_channel_id: int
-    accusation_channel_id: int
+    api_url: str
+    api_key: str
+    channel_id: int
     banned_word: str
     emoji_reacts: str
-    sentences: list[str]
-
-
-class RoleInfo(BaseModel):
-    name: str
-    colour: str
 
 
 class BotConfig(BaseSettings):

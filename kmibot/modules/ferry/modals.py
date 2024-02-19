@@ -26,7 +26,7 @@ class AccuseModal(discord.ui.Modal):
         await self.module.command_group.publish_accusation(  # type: ignore[has-type]
             self.criminal,
             interaction.user,
-            quote=self.evidence,
+            quote=self.evidence.value,
         )
         await interaction.response.send_message(
             "The crime has been submitted for a public trial. You are not allowed to ratify it.",
