@@ -57,12 +57,12 @@ class FerryCommand(Group):
         quote: str,
     ) -> None:
         try:
-            person_criminal = await self.ferry_module.api_client.get_person_for_discord_member(
+            person_criminal = await self.ferry_module.api_client.get_person_for_discord_member(  # type: ignore[has-type]
                 criminal
-            )  # type: ignore[has-type]
-            person_accuser = await self.ferry_module.api_client.get_person_for_discord_member(
+            )
+            person_accuser = await self.ferry_module.api_client.get_person_for_discord_member(  # type: ignore[has-type]
                 accuser
-            )  # type: ignore[has-type]
+            )
         except httpx.HTTPStatusError as exc:
             LOGGER.exception(exc)
             return

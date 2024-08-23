@@ -3,7 +3,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 import discord
-import tomli
+import tomllib
 from pydantic import BaseModel, HttpUrl, ValidationError, validator
 from pydantic_settings import BaseSettings
 
@@ -65,12 +65,12 @@ class BotConfig(BaseSettings):
     def load_from_file(cls, path: Path) -> "BotConfig":  # noqa: ANN102
         try:
             with path.open("rb") as fh:
-                data = tomli.load(fh)
+                data = tomllib.load(fh)
         except FileNotFoundError as e:
             raise ConfigError("Unable to find config file") from e
         except OSError as e:
             raise ConfigError("Unable to read config file.") from e
-        except tomli.TOMLDecodeError as e:
+        except tomllib.TOMLDecodeError as e:
             raise ConfigError(f"Unable to parse TOML: {e}") from e
 
         try:
