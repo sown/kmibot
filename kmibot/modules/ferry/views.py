@@ -78,7 +78,8 @@ class RatifyButton(discord.ui.Button):
         ]
         await interaction.followup.send("\n".join(lines))
 
-        await self._ferry_module.command_group.publish_leaderboard()  # type: ignore[has-type]
+        leaderboard = await self._ferry_module.command_group.get_leaderboard()  # type: ignore[has-type]
+        await self._ferry_module.channel.send(leaderboard)
 
 
 class RatifyAccusationView(discord.ui.View):

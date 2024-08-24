@@ -41,14 +41,13 @@ class FerryCommand(Group):
         self.config = config
         self.ferry_module = module
 
-    async def publish_leaderboard(self) -> None:
+    async def get_leaderboard(self) -> str:
         people = await self.ferry_module.api_client.get_leaderboard()  # type: ignore[has-type]
         content = [
-            f"{person.get_display_for_message()} {ferrify(math.ceil(person.current_score), person.id)}"
+            f"{person.get_display_for_message()} {ferrify(math.ceil(person.current_score), person.id.int)}"
             for person in people
         ]
-
-        await self.ferry_module.channel.send("\n".join(["Bad people:"] + content))
+        return "\n".join(["Bad people:"] + content)
 
     async def publish_accusation(
         self,
@@ -79,7 +78,7 @@ class FerryCommand(Group):
             lines.extend(["", f"> {quote}"])
 
         lines.extend(
-            ["", f"Please vote on whether {criminal.mention} is guilty using the emojis below."]
+            ["", f"If you agree that {criminal.mention} is guilty please ratify the accusation."]
         )
 
         view = RatifyAccusationView(self.ferry_module, accusation)
@@ -101,3 +100,9 @@ class FerryCommand(Group):
             return
 
         await interaction.response.send_modal(AccuseModal(self.ferry_module, criminal=member))
+
+    @command(description="Get the current scoreboard")
+    async def scoreboard(self, interaction: discord.Interaction) -> None:
+        LOGGER.info(f"{interaction.user} used /ferry scoreboard")
+        leaderboard = await self.get_leaderboard()
+        await interaction.response.send_message(leaderboard, ephemeral=True)
