@@ -106,3 +106,25 @@ class FerryCommand(Group):
         LOGGER.info(f"{interaction.user} used /ferry scoreboard")
         leaderboard = await self.get_leaderboard()
         await interaction.response.send_message(leaderboard, ephemeral=True)
+
+    @command(description="Get a FACT")
+    async def fact(self, interaction: discord.Interaction) -> None:
+        LOGGER.info(f"{interaction.user} used /ferry fact")
+        try:
+            person = await self.ferry_module.api_client.get_person_for_discord_member(  # type: ignore[has-type]
+                interaction.user
+            )
+            fact_data = await self.ferry_module.api_client.get_fact_for_person(person.id)  # type: ignore[has-type]
+        except httpx.HTTPStatusError as exc:
+            LOGGER.exception(exc)
+            await interaction.response.send_message("Unable to get FACT", ephemeral=True)
+            return
+
+        if fact_data.link_token is None:
+            await interaction.response.send_message(
+                "Sorry, no FACT is currently available.", ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                f"Your FACT is `{fact_data.link_token}`.", ephemeral=True
+            )

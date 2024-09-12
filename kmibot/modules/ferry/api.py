@@ -58,6 +58,10 @@ class AccusationSchema(BaseModel):
     updated_at: datetime
 
 
+class FactSchema(BaseModel):
+    link_token: str | None
+
+
 class FerryAPI:
     def __init__(self, api_url: str, api_key: str) -> None:
         self._api_url = api_url
@@ -113,6 +117,10 @@ class FerryAPI:
         payload = {"display_name": member.display_name, "discord_id": member.id}
         data = await self._request("POST", "v2/people/", json=payload)
         return PersonSchema.model_validate(data)
+
+    async def get_fact_for_person(self, person_id: UUID) -> FactSchema:
+        data = await self._request("GET", f"v2/people/{person_id}/fact/")
+        return FactSchema.model_validate(data)
 
     async def create_accusation(
         self, created_by: UUID, suspect: UUID, quote: str
