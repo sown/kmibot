@@ -26,7 +26,7 @@ FRONT_OF_TRAIN = [":bullettrain_front:", ":bullettrain_side:", ":steam_locomotiv
 TRAIN_PARTS = [":train:", ":railway_car:"]
 
 
-def ferrify(count: int, seed: Optional[Any] = None) -> str:
+def ferrify(count: int, seed: Any | None = None) -> str:
     if count == 0:
         return ""
 
@@ -51,8 +51,8 @@ class FerryCommand(Group):
 
     async def publish_accusation(
         self,
-        criminal: Union[discord.User, discord.Member],
-        accuser: Union[discord.User, discord.ClientUser, discord.Member],
+        criminal: discord.User | discord.Member,
+        accuser: discord.User | discord.ClientUser | discord.Member,
         quote: str,
     ) -> None:
         try:

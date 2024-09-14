@@ -14,9 +14,7 @@ class AccuseModal(discord.ui.Modal):
         required=True,
     )
 
-    def __init__(
-        self, module: "FerryModule", *, criminal: Union[discord.User, discord.Member]
-    ) -> None:
+    def __init__(self, module: "FerryModule", *, criminal: discord.User | discord.Member) -> None:
         self.module = module
         self.criminal = criminal
         title = f"Accuse {criminal.display_name} of Ferrying"

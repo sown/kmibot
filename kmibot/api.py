@@ -66,7 +66,7 @@ class PubSchema(BaseModel):
     id: UUID
     name: str
     emoji: str
-    menu_url: Optional[HttpUrl] = None
+    menu_url: HttpUrl | None = None
     map_url: HttpUrl
 
     @validator("menu_url", pre=True)

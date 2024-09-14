@@ -12,7 +12,7 @@ class PubSelector(discord.ui.Select):
         self.prompt = prompt
 
         self.selected = asyncio.Event()
-        self.pub: Optional[PubSchema] = None
+        self.pub: PubSchema | None = None
 
         options = [discord.SelectOption(label=pub.name, emoji=pub.emoji) for pub in pubs]
 
