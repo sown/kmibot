@@ -4,6 +4,7 @@ import logging
 import discord
 from discord import app_commands
 
+from .api import FerryAPI
 from .config import BotConfig
 from .modules import MODULES, Module
 
@@ -17,8 +18,9 @@ class DiscordClient(discord.Client):
         self.config = config
         self.guild = discord.Object(config.discord.guild_id)
         self.tree = app_commands.CommandTree(self)
+        self.api_client = FerryAPI(self.config.ferry.api_url, self.config.ferry.api_key)
 
-        self._modules: list[Module] = [module_cls(self) for module_cls in MODULES]
+        self._modules: list[Module] = [module_cls(self, self.api_client) for module_cls in MODULES]
         LOGGER.info(f"Set up {len(self._modules)} modules")
 
     @property

@@ -5,25 +5,27 @@ from typing import Optional
 import discord
 from discord.app_commands import Group, command
 
-from kmibot.config import BotConfig, PubInfo
+from kmibot.config import BotConfig
 
 from .utils import event_is_pub, get_pub_buttons_view
 from .views import PubView
+from kmibot.api import FerryAPI, PubSchema
 
 LOGGER = getLogger(__name__)
 
 
 class PubCommand(Group):
-    def __init__(self, config: BotConfig) -> None:
-        super().__init__(name="pub", description="Manage the pub event")
+    def __init__(self, config: BotConfig, api_client: FerryAPI) -> None:
         self.config = config
+        self.api_client = api_client
+        super().__init__(name="pub", description="Manage the pub event")
 
     async def _choose_pub(
         self,
         interaction: discord.Interaction,
         prompt: str,
-    ) -> PubInfo:
-        view = PubView(self.config.pub, prompt)
+    ) -> PubSchema:
+        view = PubView(await self.api_client.get_pubs(), prompt)
         await interaction.response.send_message(
             prompt,
             view=view,
@@ -66,7 +68,7 @@ class PubCommand(Group):
     async def _create_pub_event(
         self,
         guild: discord.Guild,
-        pub: PubInfo,
+        pub: PubSchema,
         start_time: datetime,
         *,
         user: str = "A user",

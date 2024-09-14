@@ -4,21 +4,25 @@ from typing import TYPE_CHECKING
 import discord
 from discord import EventStatus
 
+from kmibot.api import FerryAPI
+
 from ..module import Module
 from .commands import PubCommand
 from .utils import event_is_pub, get_pub_buttons_view
 
 if TYPE_CHECKING:
     from kmibot.client import DiscordClient
+    from kmibot.api import FerryAPI
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 class PubModule(Module):
-    def __init__(self, client: "DiscordClient") -> None:
+    def __init__(self, client: "DiscordClient", api_client: "FerryAPI") -> None:
         self.client = client
-        client.tree.add_command(PubCommand(client.config), guild=client.guild)
+        self.api_client = api_client
+        client.tree.add_command(PubCommand(client.config, api_client), guild=client.guild)
 
     async def on_scheduled_event_update(
         self,
@@ -41,7 +45,11 @@ class PubModule(Module):
         if old_event.status is not EventStatus.active and new_event.status is EventStatus.active:
             # The Pub has started.
             LOGGER.info("A pub event has started.")
-            pub = client.config.pub.get_pub_by_name(new_event.location or "")
+
+            pub = discord.utils.find(
+                lambda p: p.name == new_event.location or "",
+                await self.api_client.get_pubs(),
+            )
             if pub:
                 formatted_pub_name = (
                     f"{pub.emoji} **{pub.name}** {self.client.config.pub.supplemental_emoji}"

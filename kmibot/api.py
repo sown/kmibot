@@ -1,10 +1,10 @@
 from datetime import datetime
 from logging import getLogger
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 import discord
 import httpx
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, HttpUrl, validator
 
 LOGGER = getLogger(__name__)
 
@@ -60,6 +60,18 @@ class AccusationSchema(BaseModel):
 
 class FactSchema(BaseModel):
     link_token: str | None
+
+
+class PubSchema(BaseModel):
+    id: UUID
+    name: str
+    emoji: str
+    menu_url: Optional[HttpUrl] = None
+    map_url: HttpUrl
+
+    @validator("menu_url", pre=True)
+    def parse_menu_url(cls, val: str) -> str | None:
+        return val if val else None
 
 
 class FerryAPI:
@@ -147,3 +159,10 @@ class FerryAPI:
             "POST", f"v2/court/accusations/{accusation_id}/ratification/", json=payload
         )
         return RatificationSchema.model_validate(data)
+
+    async def get_pubs(
+        self,
+    ) -> list[PubSchema]:
+        data = await self._request("GET", "v2/pub/pubs/")
+        ta = TypeAdapter(list[PubSchema])
+        return ta.validate_python(data["results"])

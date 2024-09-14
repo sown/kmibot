@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import discord
 
 from kmibot.modules import Module
-from kmibot.modules.ferry.api import FerryAPI
+from kmibot.api import FerryAPI
 
 from .commands import FerryCommand
 from .modals import AccuseModal
@@ -19,10 +19,10 @@ LOGGER = getLogger(__name__)
 
 
 class FerryModule(Module):
-    def __init__(self, client: DiscordClient) -> None:
+    def __init__(self, client: DiscordClient, api_client: FerryAPI) -> None:
         self.client = client
         self.command_group = FerryCommand(client.config, self)
-        self.api_client = FerryAPI(client.config.ferry.api_url, client.config.ferry.api_key)
+        self.api_client = api_client
         client.tree.add_command(self.command_group, guild=client.guild)
         client.tree.context_menu(name="Accuse of Ferrying", guild=client.guild)(
             self.accuse_context_menu

@@ -8,7 +8,7 @@ from uuid import UUID
 import discord
 import httpx
 
-from kmibot.modules.ferry.api import AccusationSchema
+from kmibot.api import AccusationSchema
 
 if typing.TYPE_CHECKING:
     from kmibot.modules.ferry import FerryModule

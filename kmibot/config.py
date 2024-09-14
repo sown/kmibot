@@ -1,10 +1,8 @@
 from pathlib import Path
-from typing import Optional
 from zoneinfo import ZoneInfo
 
-import discord
 import tomllib
-from pydantic import BaseModel, HttpUrl, ValidationError, validator
+from pydantic import BaseModel, ValidationError, validator
 from pydantic_settings import BaseSettings
 
 
@@ -17,27 +15,13 @@ class DiscordConfig(BaseModel):
     guild_id: int
 
 
-class PubInfo(BaseModel):
-    name: str
-    emoji: str
-    menu_url: Optional[HttpUrl] = None
-    map_url: HttpUrl
-
-
 class PubConfig(BaseModel):
-    pubs: list[PubInfo]
     supplemental_emoji: str = "🍺"
     channel_id: int
     description: str
     weekday: int
     hour: int
     minute: int = 0
-
-    def get_pub_by_name(self, name: str) -> Optional[PubInfo]:
-        return discord.utils.find(
-            lambda p: p.name == name,
-            self.pubs,
-        )
 
 
 class FerryConfig(BaseModel):
