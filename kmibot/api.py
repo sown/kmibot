@@ -148,13 +148,16 @@ class FerryAPI:
         data = await self._request("GET", f"v2/people/{person_id}/fact/")
         return FactSchema.model_validate(data)
 
-    async def create_accusation(self, created_by: UUID, suspect: UUID, quote: str) -> None:
+    async def create_accusation(
+        self, created_by: UUID, suspect: UUID, quote: str
+    ) -> AccusationSchema:
         payload = {
             "quote": quote,
             "suspect": str(suspect),
             "created_by": str(created_by),
         }
-        await self._request("POST", "v2/court/accusations/", json=payload)
+        data = await self._request("POST", "v2/court/accusations/", json=payload)
+        return AccusationSchema.model_validate(data)
 
     async def get_accusation(self, accusation_id: UUID) -> AccusationSchema:
         data = await self._request("GET", f"v2/court/accusations/{accusation_id}/")

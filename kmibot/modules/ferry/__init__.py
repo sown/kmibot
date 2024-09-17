@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import getLogger
+import re
 from typing import TYPE_CHECKING
 
 import discord
@@ -57,9 +58,9 @@ class FerryModule(Module):
 
     async def on_message(self, message: discord.Message) -> None:
         assert self.client.user
-        if (
-            message.author != self.client.user
-            and self.client.config.ferry.banned_word in message.content
+        pattern = rf"\b{self.client.config.ferry.banned_word}\b"
+        if message.author != self.client.user and re.match(
+            pattern, message.content, flags=re.IGNORECASE
         ):
             LOGGER.info(f"{message.author.display_name} ferried in #{message.channel}")
             for emoji in self.client.config.ferry.emoji_reacts:
