@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from logging import getLogger
-from typing import Optional
 
 import discord
 from discord.app_commands import Group, command
@@ -71,11 +70,11 @@ class PubCommand(Group):
         pub: PubSchema,
         start_time: datetime,
         *,
-        user: str = "A user",
+        user: discord.User | discord.Member,
         title: str = "Pub",
     ) -> discord.ScheduledEvent:
         LOGGER.info(f"Creating scheduled event at {start_time}")
-        return await guild.create_scheduled_event(
+        scheduled_event = await guild.create_scheduled_event(
             name=f"{pub.emoji} {title} {self.config.pub.supplemental_emoji}",
             start_time=start_time,
             end_time=start_time + timedelta(hours=3),
@@ -85,6 +84,14 @@ class PubCommand(Group):
             description=self.config.pub.description,
             reason=f"{user} used the /pub next command",
         )
+        person = await self.api_client.get_person_for_discord_member(user)
+        await self.api_client.create_pub_event(
+            timestamp=start_time,
+            pub_id=pub.id,
+            created_by=person.id,
+            scheduled_event_id=scheduled_event.id,
+        )
+        return scheduled_event
 
     @command(description="Select the pub for next week.")  # type: ignore[arg-type]
     async def next(self, interaction: discord.Interaction) -> None:  # noqa: A003
@@ -113,7 +120,7 @@ class PubCommand(Group):
             interaction.guild,
             pub,
             pub_time,
-            user=interaction.user.name,
+            user=interaction.user,
         )
 
         LOGGER.info(f"Posting pub info in {pub_channel}")
@@ -149,7 +156,7 @@ class PubCommand(Group):
             interaction.guild,
             pub,
             pub_time,
-            user=interaction.user.name,
+            user=interaction.user,
             title="Spontaneous Pub",
         )
 

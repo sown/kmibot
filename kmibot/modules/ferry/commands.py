@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import random
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import discord
 from discord.app_commands import Group, command, describe

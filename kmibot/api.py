@@ -1,6 +1,6 @@
 from datetime import datetime
 from logging import getLogger
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 import discord
 import httpx
@@ -74,6 +74,14 @@ class PubSchema(BaseModel):
         return val if val else None
 
 
+class PubEventSchema(BaseModel):
+    id: UUID
+    timestamp: datetime
+    pub: UUID
+    discord_id: int | None
+    attendees: list[UUID]
+
+
 class FerryAPI:
     def __init__(self, api_url: str, api_key: str) -> None:
         self._api_url = api_url
@@ -91,7 +99,13 @@ class FerryAPI:
         resp = await self._client.request(
             method, self._api_url + endpoint, headers=headers, **kwargs
         )
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            LOGGER.error(str(e))
+            LOGGER.error(resp.content)
+            raise
+
         data = resp.json()
         LOGGER.info(f"{method} {endpoint} -> {resp.status_code} {data} ")
         return data
@@ -134,16 +148,13 @@ class FerryAPI:
         data = await self._request("GET", f"v2/people/{person_id}/fact/")
         return FactSchema.model_validate(data)
 
-    async def create_accusation(
-        self, created_by: UUID, suspect: UUID, quote: str
-    ) -> AccusationSchema:
+    async def create_accusation(self, created_by: UUID, suspect: UUID, quote: str) -> None:
         payload = {
             "quote": quote,
             "suspect": str(suspect),
             "created_by": str(created_by),
         }
-        data = await self._request("POST", "v2/court/accusations/", json=payload)
-        return AccusationSchema.model_validate(data)
+        await self._request("POST", "v2/court/accusations/", json=payload)
 
     async def get_accusation(self, accusation_id: UUID) -> AccusationSchema:
         data = await self._request("GET", f"v2/court/accusations/{accusation_id}/")
@@ -166,3 +177,29 @@ class FerryAPI:
         data = await self._request("GET", "v2/pub/pubs/")
         ta = TypeAdapter(list[PubSchema])
         return ta.validate_python(data["results"])
+
+    async def create_pub_event(
+        self,
+        timestamp: datetime,
+        pub_id: UUID,
+        created_by: UUID,
+        scheduled_event_id: int,
+    ) -> None:
+        payload = {
+            "timestamp": timestamp.isoformat(),
+            "pub": str(pub_id),
+            "discord_id": scheduled_event_id,
+            "table": None,
+            "attendees": [],
+            "created_by": str(created_by),
+        }
+        await self._request("POST", "v2/pub/events/", json=payload)
+
+    async def get_pub_event_by_discord_id(self, scheduled_event_id: int) -> PubEventSchema:
+        try:
+            data = await self._request("GET", f"v2/pub/events/?discord_id={scheduled_event_id}")
+        except httpx.HTTPStatusError as exc:
+            raise exc
+
+        ta = TypeAdapter(list[PubEventSchema])
+        return ta.validate_python(data["results"])[0]
