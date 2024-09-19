@@ -74,12 +74,24 @@ class PubSchema(BaseModel):
         return val if val else None
 
 
+class PubLinkSchema(BaseModel):
+    id: UUID
+    name: str
+
+
+class PubTableSchema(BaseModel):
+    id: UUID
+    pub: PubLinkSchema
+    number: int
+
+
 class PubEventSchema(BaseModel):
     id: UUID
     timestamp: datetime
     pub: UUID
     discord_id: int | None
-    attendees: list[UUID]
+    table: PubTableSchema | None
+    attendees: list[PersonLinkSchema]
 
 
 class FerryAPI:
@@ -181,6 +193,13 @@ class FerryAPI:
         ta = TypeAdapter(list[PubSchema])
         return ta.validate_python(data["results"])
 
+    async def get_pub(
+        self,
+        pub_id: UUID,
+    ) -> PubSchema:
+        data = await self._request("GET", f"v2/pub/pubs/{pub_id}/")
+        return PubSchema.model_validate(data)
+
     async def create_pub_event(
         self,
         timestamp: datetime,
@@ -206,3 +225,34 @@ class FerryAPI:
 
         ta = TypeAdapter(list[PubEventSchema])
         return ta.validate_python(data["results"])[0]
+
+    async def add_attendee_to_pub_event(self, pub_event_id: UUID, person_id: UUID) -> None:
+        payload = {
+            "person": str(person_id),
+        }
+        try:
+            await self._request(
+                "POST", f"v2/pub/events/{pub_event_id}/attendees/add/", json=payload
+            )
+        except httpx.HTTPStatusError as exc:
+            LOGGER.exception(exc)
+
+    async def remove_attendee_from_pub_event(self, pub_event_id: UUID, person_id: UUID) -> None:
+        payload = {
+            "person": str(person_id),
+        }
+        try:
+            await self._request(
+                "POST", f"v2/pub/events/{pub_event_id}/attendees/remove/", json=payload
+            )
+        except httpx.HTTPStatusError as exc:
+            LOGGER.exception(exc)
+
+    async def update_table_for_pub_event(self, pub_event_id: UUID, table_number: int) -> None:
+        payload = {
+            "table_number": table_number,
+        }
+        try:
+            await self._request("POST", f"v2/pub/events/{pub_event_id}/table/", json=payload)
+        except httpx.HTTPStatusError as exc:
+            LOGGER.exception(exc)

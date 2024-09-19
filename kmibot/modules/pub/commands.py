@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from logging import getLogger
 
 import discord
-from discord.app_commands import Group, command
+from discord.app_commands import Group, command, describe
 
 from kmibot.config import BotConfig
 
@@ -36,6 +36,7 @@ class PubCommand(Group):
 
     def _get_next_pub_time(self) -> datetime:
         now = datetime.now(tz=self.config.timezone)
+
         today = now.date()
         if today.weekday() < self.config.pub.weekday or (
             today.weekday() == self.config.pub.weekday
@@ -57,10 +58,16 @@ class PubCommand(Group):
             tzinfo=self.config.timezone,
         )
 
-    def _get_next_event(self, guild: discord.Guild) -> discord.ScheduledEvent | None:
+    def _get_next_event(
+        self, guild: discord.Guild, *, ignore_time: bool = False
+    ) -> discord.ScheduledEvent | None:
         pub_time = self._get_next_pub_time()
-        for event in guild.scheduled_events:
-            if event_is_pub(event) and event.start_time == pub_time:
+        for event in sorted(guild.scheduled_events, key=lambda se: se.start_time):
+            if (
+                event_is_pub(event)
+                and (ignore_time or event.start_time == pub_time)
+                and event.status in {discord.EventStatus.scheduled, discord.EventStatus.active}
+            ):
                 return event
         return None
 
@@ -123,6 +130,9 @@ class PubCommand(Group):
             user=interaction.user,
         )
 
+        pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
+        assert isinstance(pub_channel, discord.TextChannel)
+
         LOGGER.info(f"Posting pub info in {pub_channel}")
         formatted_pub_name = f"{pub.emoji} **{pub.name}** {self.config.pub.supplemental_emoji}"
         await pub_channel.send(
@@ -161,3 +171,49 @@ class PubCommand(Group):
         )
 
         # A message is posted in the channel by the scheduled event handler
+
+    @command(description="Update the table number for the current pub event")
+    @describe(
+        table_number="The table number",
+    )
+    async def table(self, interaction: discord.Interaction, table_number: int) -> None:
+        assert interaction.guild
+        if table_number <= 0:
+            await interaction.response.send_message(
+                "Sorry, the table number must exist in this dimension.",
+                ephemeral=True,
+            )
+            return
+
+        event = self._get_next_event(interaction.guild, ignore_time=True)
+        if event is None:
+            LOGGER.info("No pub exists.")
+            await interaction.response.send_message(
+                "There doesn't appear to be a pub at this time.",
+                ephemeral=True,
+            )
+            return
+
+        pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
+        pub = await self.api_client.get_pub(pub_event.pub)
+        await self.api_client.update_table_for_pub_event(pub_event.id, table_number)
+
+        await interaction.response.send_message(
+            f"Set table number to {table_number}, thanks.",
+            ephemeral=True,
+        )
+
+        pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
+        assert isinstance(pub_channel, discord.TextChannel)
+
+        LOGGER.info(f"Posting pub table info in {pub_channel}")
+        formatted_pub_name = f"{pub.emoji} **{pub.name}** {self.config.pub.supplemental_emoji}"
+        await pub_channel.send(
+            "\n".join(
+                [
+                    "**Pub Table**",
+                    f"We are at table {table_number} in {formatted_pub_name}",
+                ],
+            ),
+            view=get_pub_buttons_view(pub),
+        )
