@@ -203,6 +203,8 @@ class PubCommand(Group):
             ephemeral=True,
         )
 
+        await event.edit(location=f"{pub.name} - Table {table_number}")
+
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
 
