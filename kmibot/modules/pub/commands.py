@@ -6,7 +6,7 @@ from discord.app_commands import Group, command, describe
 
 from kmibot.config import BotConfig
 
-from .utils import event_is_pub, get_pub_buttons_view
+from .utils import event_is_pub, get_formatted_pub_name, get_pub_buttons_view
 from .views import PubView
 from kmibot.api import FerryAPI, PubSchema
 
@@ -134,7 +134,7 @@ class PubCommand(Group):
         assert isinstance(pub_channel, discord.TextChannel)
 
         LOGGER.info(f"Posting pub info in {pub_channel}")
-        formatted_pub_name = f"{pub.emoji} **{pub.name}** {self.config.pub.supplemental_emoji}"
+        formatted_pub_name = get_formatted_pub_name(pub, self.config)
         await pub_channel.send(
             "\n".join(
                 [

@@ -1,6 +1,7 @@
 import discord
 
 from kmibot.api import PubSchema
+from kmibot.config import BotConfig
 
 
 def event_is_pub(event: discord.ScheduledEvent) -> bool:
@@ -13,3 +14,7 @@ def get_pub_buttons_view(pub: PubSchema) -> discord.ui.View:
     if pub.menu_url:
         view.add_item(discord.ui.Button(label="Menu", url=str(pub.menu_url)))
     return view
+
+
+def get_formatted_pub_name(pub: PubSchema, config: BotConfig) -> str:
+    return f"{pub.emoji} **{pub.name}** {config.pub.supplemental_emoji}"

@@ -8,18 +8,17 @@ from kmibot.api import FerryAPI
 
 from ..module import Module
 from .commands import PubCommand
-from .utils import event_is_pub, get_pub_buttons_view
+from .utils import event_is_pub, get_formatted_pub_name, get_pub_buttons_view
 
 if TYPE_CHECKING:
     from kmibot.client import DiscordClient
-    from kmibot.api import FerryAPI
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 class PubModule(Module):
-    def __init__(self, client: "DiscordClient", api_client: "FerryAPI") -> None:
+    def __init__(self, client: "DiscordClient", api_client: FerryAPI) -> None:
         self.client = client
         self.api_client = api_client
         client.tree.add_command(PubCommand(client.config, api_client), guild=client.guild)
@@ -46,29 +45,21 @@ class PubModule(Module):
             # The Pub has started.
             LOGGER.info("A pub event has started.")
 
-            pub = discord.utils.find(
-                lambda p: p.name == new_event.location or "",
-                await self.api_client.get_pubs(),
+            pub_event = await self.api_client.get_pub_event_by_discord_id(new_event.id)
+            pub = await self.api_client.get_pub(pub_event.pub)
+
+            formatted_pub_name = get_formatted_pub_name(pub, self.client.config)
+            await self.pub_channel.send(
+                "\n".join(
+                    [
+                        "**Pub-O-Clock**",
+                        f"We are at {formatted_pub_name}",
+                        "",
+                        "Please let others know the table by using /pub table",
+                    ],
+                ),
+                view=get_pub_buttons_view(pub),
             )
-            if pub:
-                formatted_pub_name = (
-                    f"{pub.emoji} **{pub.name}** {self.client.config.pub.supplemental_emoji}"
-                )
-                await self.pub_channel.send(
-                    "\n".join(
-                        [
-                            "**Pub-O-Clock**",
-                            f"We are at {formatted_pub_name}",
-                            "",
-                            "Please let others know the table by using /pub table"
-                        ],
-                    ),
-                    view=get_pub_buttons_view(pub),
-                )
-            else:
-                LOGGER.warning(
-                    f"A pub event started, but the name was not a known pub: {new_event.location}"
-                )
 
         if (
             old_event.status is not EventStatus.completed
