@@ -148,30 +148,6 @@ class PubCommand(Group):
             view=get_pub_buttons_view(pub),
         )
 
-    @command(description="Announce a spontaneous pub event.")  # type: ignore[arg-type]
-    async def now(self, interaction: discord.Interaction) -> None:
-        LOGGER.info(f"{interaction.user} used /pub now")
-        pub = await self._choose_pub(
-            interaction,
-            "Please choose the spontaneous pub",
-        )
-        now = datetime.now(tz=self.config.timezone)
-        pub_time = now + timedelta(seconds=1)
-        assert interaction.guild is not None
-
-        pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
-        assert isinstance(pub_channel, discord.TextChannel)
-
-        await self._create_pub_event(
-            interaction.guild,
-            pub,
-            pub_time,
-            user=interaction.user,
-            title="Spontaneous Pub",
-        )
-
-        # A message is posted in the channel by the scheduled event handler
-
     @command(description="Update the table number for the current pub event")
     @describe(
         table_number="The table number",
