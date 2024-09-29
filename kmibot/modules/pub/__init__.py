@@ -59,6 +59,8 @@ class PubModule(Module):
                         [
                             "**Pub-O-Clock**",
                             f"We are at {formatted_pub_name}",
+                            "",
+                            "Please let others know the table by using /pub table"
                         ],
                     ),
                     view=get_pub_buttons_view(pub),
