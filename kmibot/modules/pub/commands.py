@@ -58,7 +58,7 @@ class PubCommand(Group):
             tzinfo=self.config.timezone,
         )
 
-    def _get_next_event(
+    def _get_next_pub_scheduled_event(
         self, guild: discord.Guild, *, ignore_time: bool = False
     ) -> discord.ScheduledEvent | None:
         pub_time = self._get_next_pub_time()
@@ -105,7 +105,7 @@ class PubCommand(Group):
         LOGGER.info(f"{interaction.user} used /pub next")
         assert interaction.guild is not None
 
-        if self._get_next_event(interaction.guild):
+        if self._get_next_pub_scheduled_event(interaction.guild):
             LOGGER.info("A pub event already exists.")
             await interaction.response.send_message(
                 "A pub event already exists.",
@@ -161,7 +161,7 @@ class PubCommand(Group):
             )
             return
 
-        event = self._get_next_event(interaction.guild, ignore_time=True)
+        event = self._get_next_pub_scheduled_event(interaction.guild, ignore_time=True)
         if event is None:
             LOGGER.info("No pub exists.")
             await interaction.response.send_message(
@@ -171,7 +171,22 @@ class PubCommand(Group):
             return
 
         pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
+        if pub_event is None:
+            await interaction.response.send_message(
+                "Cannot set the table number. Unable to find the current pub event in the database.",
+                ephemeral=True,
+            )
+            return
+
         pub = await self.api_client.get_pub(pub_event.pub)
+        if pub is None:
+            # This shouldn't happen, unless there's a race condition.
+            await interaction.response.send_message(
+                "Something has gone wrong.",
+                ephemeral=True,
+            )
+            return
+
         await self.api_client.update_table_for_pub_event(pub_event.id, table_number)
 
         await interaction.response.send_message(

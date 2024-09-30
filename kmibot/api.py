@@ -101,7 +101,9 @@ class FerryAPI:
 
         self._client = httpx.AsyncClient()
 
-    async def _request(self, method: str, endpoint: str, **kwargs) -> Any:
+    async def _request(
+        self, method: str, endpoint: str, *, if_404_then_none: bool = False, **kwargs
+    ) -> Any:
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -111,6 +113,9 @@ class FerryAPI:
         resp = await self._client.request(
             method, self._api_url + endpoint, headers=headers, **kwargs
         )
+        if if_404_then_none and resp.status_code == 404:
+            return None
+
         try:
             resp.raise_for_status()
         except httpx.HTTPStatusError as e:
@@ -196,8 +201,10 @@ class FerryAPI:
     async def get_pub(
         self,
         pub_id: UUID,
-    ) -> PubSchema:
-        data = await self._request("GET", f"v2/pub/pubs/{pub_id}/")
+    ) -> PubSchema | None:
+        data = await self._request("GET", f"v2/pub/pubs/{pub_id}/", if_404_then_none=True)
+        if data is None:
+            return None
         return PubSchema.model_validate(data)
 
     async def create_pub_event(
@@ -217,14 +224,17 @@ class FerryAPI:
         }
         await self._request("POST", "v2/pub/events/", json=payload)
 
-    async def get_pub_event_by_discord_id(self, scheduled_event_id: int) -> PubEventSchema:
+    async def get_pub_event_by_discord_id(self, scheduled_event_id: int) -> PubEventSchema | None:
         try:
             data = await self._request("GET", f"v2/pub/events/?discord_id={scheduled_event_id}")
         except httpx.HTTPStatusError as exc:
             raise exc
 
         ta = TypeAdapter(list[PubEventSchema])
-        return ta.validate_python(data["results"])[0]
+        try:
+            return ta.validate_python(data["results"])[0]
+        except IndexError:
+            return None
 
     async def add_attendee_to_pub_event(self, pub_event_id: UUID, person_id: UUID) -> None:
         payload = {

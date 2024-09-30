@@ -4,7 +4,6 @@ import logging
 import discord
 from discord import app_commands
 
-from kmibot.modules.pub.utils import event_is_pub
 
 from .api import FerryAPI
 from .config import BotConfig
@@ -53,6 +52,14 @@ class DiscordClient(discord.Client):
         for module in self._modules:
             asyncio.create_task(module.on_ready(self))
 
+    async def on_scheduled_event_create(
+        self,
+        event: discord.ScheduledEvent,
+    ) -> None:
+        LOGGER.info(f"Received create for scheduled event: {event.name}")
+        for module in self._modules:
+            asyncio.create_task(module.on_scheduled_event_create(self, event))
+
     async def on_scheduled_event_update(
         self,
         old_event: discord.ScheduledEvent,
@@ -66,18 +73,12 @@ class DiscordClient(discord.Client):
         self, event: discord.ScheduledEvent, user: discord.User
     ) -> None:
         LOGGER.info(f"{user} joined {event.name}")
-        if event_is_pub(event):
-            pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
-            person = await self.api_client.get_person_for_discord_member(user)
-            await self.api_client.add_attendee_to_pub_event(pub_event.id, person.id)
-            LOGGER.info(f"Added {person.display_name} to {pub_event}")
+        for module in self._modules:
+            asyncio.create_task(module.on_scheduled_event_user_add(self, event, user))
 
     async def on_scheduled_event_user_remove(
         self, event: discord.ScheduledEvent, user: discord.User
     ) -> None:
         LOGGER.info(f"{user} left {event.name}")
-        if event_is_pub(event):
-            pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
-            person = await self.api_client.get_person_for_discord_member(user)
-            await self.api_client.remove_attendee_from_pub_event(pub_event.id, person.id)
-            LOGGER.info(f"Removed {person.display_name} from {pub_event}")
+        for module in self._modules:
+            asyncio.create_task(module.on_scheduled_event_user_remove(self, event, user))

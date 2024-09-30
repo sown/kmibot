@@ -23,6 +23,31 @@ class PubModule(Module):
         self.api_client = api_client
         client.tree.add_command(PubCommand(client.config, api_client), guild=client.guild)
 
+    async def on_scheduled_event_create(
+        self,
+        client: "DiscordClient",
+        event: discord.ScheduledEvent,
+    ) -> None:
+        creator = event.creator
+        if not creator:
+            return
+
+        if event_is_pub(event):
+            bot_user = self.client.user
+            assert bot_user
+            if creator.id != bot_user.id:
+                LOGGER.warning("A pub event was manually created.")
+                await event.delete(reason="Removing manually created pub event")
+                await creator.send(
+                    "I've deleted your manually created pub event. Please use /pub next."
+                )
+        else:
+            assert isinstance(self.client.guild, discord.Guild)
+            await creator.send(
+                f'Hey, I just say that you created an event "{event.name}" for {self.client.guild.name}\n'
+                "That event doesn't look like a pub event, but if it is I'm going to ignore it."
+            )
+
     async def on_scheduled_event_update(
         self,
         client: "DiscordClient",
@@ -31,6 +56,26 @@ class PubModule(Module):
     ) -> None:
         if event_is_pub(new_event):
             await self.handle_pub_event_change(client, old_event, new_event)
+
+    async def on_scheduled_event_user_add(
+        self, client: "DiscordClient", event: discord.ScheduledEvent, user: discord.User
+    ) -> None:
+        if event_is_pub(event):
+            pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
+            if pub_event:
+                person = await self.api_client.get_person_for_discord_member(user)
+                await self.api_client.add_attendee_to_pub_event(pub_event.id, person.id)
+                LOGGER.info(f"Added {person.display_name} to {pub_event}")
+
+    async def on_scheduled_event_user_remove(
+        self, client: "DiscordClient", event: discord.ScheduledEvent, user: discord.User
+    ) -> None:
+        if event_is_pub(event):
+            pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
+            if pub_event:
+                person = await self.api_client.get_person_for_discord_member(user)
+                await self.api_client.remove_attendee_from_pub_event(pub_event.id, person.id)
+                LOGGER.info(f"Removed {person.display_name} from {pub_event}")
 
     async def handle_pub_event_change(
         self,
@@ -46,7 +91,13 @@ class PubModule(Module):
             LOGGER.info("A pub event has started.")
 
             pub_event = await self.api_client.get_pub_event_by_discord_id(new_event.id)
+            if not pub_event:
+                LOGGER.error("Pub Event does not exist.")
+                return
             pub = await self.api_client.get_pub(pub_event.pub)
+            if not pub:
+                LOGGER.error("Pub does not exist.")
+                return
 
             formatted_pub_name = get_formatted_pub_name(pub, self.client.config)
             await self.pub_channel.send(
