@@ -148,6 +148,85 @@ class PubCommand(Group):
             view=get_pub_buttons_view(pub),
         )
 
+    @command(description="Change the venue for a pub event")  # type: ignore[arg-type]
+    async def change(self, interaction: discord.Interaction) -> None:  # noqa: A003
+        LOGGER.info(f"{interaction.user} used /pub change")
+        assert interaction.guild is not None
+
+        scheduled_event = self._get_next_pub_scheduled_event(interaction.guild)
+        if not scheduled_event:
+            LOGGER.info("No upcoming pub event.")
+            await interaction.response.send_message(
+                "There is no upcoming pub event. Use /pub next",
+                ephemeral=True,
+            )
+            return
+
+        original_pub_event = await self.api_client.get_pub_event_by_discord_id(scheduled_event.id)
+        if original_pub_event is None:
+            await interaction.response.send_message(
+                "The pub event is incorrectly registered. Cannot update.",
+                ephemeral=True,
+            )
+            return
+
+        pub = await self._choose_pub(
+            interaction,
+            f"Please choose the new pub for {scheduled_event.start_time}",
+        )
+
+        if pub.id == original_pub_event.pub:
+            await interaction.followup.send(
+                f"The pub is already at {pub.name}.",
+                ephemeral=True,
+            )
+            return
+
+        pub_event = await self.api_client.update_pub_event(original_pub_event.id, pub_id=pub.id)
+
+        await scheduled_event.edit(location=pub.name)
+
+        pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
+        assert isinstance(pub_channel, discord.TextChannel)
+
+        LOGGER.info(f"Posting updated pub info in {pub_channel}")
+        formatted_pub_name = get_formatted_pub_name(pub, self.config)
+
+        if original_pub_event is not None:
+            tags = " ".join(
+                f"<@{attendee.discord_id}>"
+                for attendee in pub_event.attendees
+                if attendee.discord_id
+            )
+        else:
+            # Nobody to tag if we don't have a pub event.
+            tags = ""
+
+        if scheduled_event.start_time >= datetime.now(tz=self.config.timezone):
+            content = "\n".join(
+                [
+                    "**Pub has moved!**",
+                    f"The pub will be at {formatted_pub_name} instead!",
+                    "",
+                    tags,
+                ],
+            )
+        else:
+            content = "\n".join(
+                [
+                    "**New Location of Next Pub**",
+                    f"The next pub will be <t:{int(scheduled_event.start_time.timestamp())}:R>",
+                    f"It will be held at {formatted_pub_name} instead of the previous location.",
+                    "",
+                    tags,
+                ],
+            )
+
+        await pub_channel.send(
+            content,
+            view=get_pub_buttons_view(pub),
+        )
+
     @command(description="Update the table number for the current pub event")
     @describe(
         table_number="The table number",

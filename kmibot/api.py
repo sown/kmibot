@@ -33,6 +33,7 @@ class PersonWithScoreSchema(PersonSchema):
 class PersonLinkSchema(BaseModel):
     id: UUID
     display_name: str
+    discord_id: int | None
 
 
 class ConsequenceLinkSchema(BaseModel):
@@ -223,6 +224,24 @@ class FerryAPI:
             "created_by": str(created_by),
         }
         await self._request("POST", "v2/pub/events/", json=payload)
+
+    async def update_pub_event(
+        self,
+        event_id: UUID,
+        *,
+        timestamp: datetime | None = None,
+        pub_id: UUID | None = None,
+    ) -> PubEventSchema:
+        payload = {}
+
+        if timestamp is not None:
+            payload["timestamp"] = timestamp.isoformat()
+
+        if pub_id is not None:
+            payload["pub"] = str(pub_id)
+
+        data = await self._request("PATCH", f"v2/pub/events/{event_id}/", json=payload)
+        return PubEventSchema.model_validate(data)
 
     async def get_pub_event_by_discord_id(self, scheduled_event_id: int) -> PubEventSchema | None:
         try:
