@@ -289,3 +289,24 @@ class PubCommand(Group):
             ),
             view=get_pub_buttons_view(pub),
         )
+
+    @command(description="Get info on how to use the /pub command.")  # type: ignore[arg-type]
+    async def help(self, interaction: discord.Interaction) -> None:  # noqa: A003
+        LOGGER.info(f"{interaction.user} used /pub next")
+        assert interaction.guild is not None
+
+        await interaction.response.send_message(
+            "\n".join(
+                [
+                    "I manage the pub events, and keep data up to date between systems.",
+                    "Please don't edit the pub events manually, it confuses me!",
+                    "Some people have auto opt-in for pub events, so use me to notify people of changes",
+                    "",
+                    "**Commands**",
+                    "/pub next - create the next pub event, if needed",
+                    "/pub table <table_no> - add the table number and let others know",
+                    "/pub change - move the location of the pub and ping all attendees.",
+                ],
+            ),
+            ephemeral=True,
+        )

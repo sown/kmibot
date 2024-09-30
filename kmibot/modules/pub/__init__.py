@@ -54,7 +54,7 @@ class PubModule(Module):
         old_event: discord.ScheduledEvent,
         new_event: discord.ScheduledEvent,
     ) -> None:
-        if event_is_pub(new_event):
+        if event_is_pub(old_event):
             await self.handle_pub_event_change(client, old_event, new_event)
 
     async def on_scheduled_event_user_add(
