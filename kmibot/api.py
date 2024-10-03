@@ -33,8 +33,9 @@ class PersonWithScoreSchema(PersonSchema):
 class PersonLinkSchema(BaseModel):
     id: UUID
     display_name: str
+    
+class PersonLinkWithDiscordSchema(PersonLinkSchema):
     discord_id: int | None
-
 
 class ConsequenceLinkSchema(BaseModel):
     id: UUID
@@ -92,7 +93,7 @@ class PubEventSchema(BaseModel):
     pub: UUID
     discord_id: int | None
     table: PubTableSchema | None
-    attendees: list[PersonLinkSchema]
+    attendees: list[PersonLinkWithDiscordSchema]
 
 
 class FerryAPI:
