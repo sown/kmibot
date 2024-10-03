@@ -170,9 +170,10 @@ class PubCommand(Group):
             )
             return
 
+        local_pub_time = scheduled_event.start_time.astimezone(self.config.timezone)
         pub = await self._choose_pub(
             interaction,
-            f"Please choose the new pub for {scheduled_event.start_time}",
+            f"Please choose the new pub for {local_pub_time}",
         )
 
         if pub.id == original_pub_event.pub:
@@ -202,11 +203,11 @@ class PubCommand(Group):
             # Nobody to tag if we don't have a pub event.
             tags = ""
 
-        if scheduled_event.start_time >= datetime.now(tz=self.config.timezone):
+        if scheduled_event.start_time < datetime.now(tz=self.config.timezone):
             content = "\n".join(
                 [
                     "**Pub has moved!**",
-                    f"The pub will be at {formatted_pub_name} instead!",
+                    f"The pub at will be at {formatted_pub_name} instead!",
                     "",
                     tags,
                 ],
