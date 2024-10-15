@@ -74,8 +74,18 @@ class PubModule(Module):
             pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
             if pub_event:
                 person = await self.api_client.get_person_for_discord_member(user)
-                await self.api_client.remove_attendee_from_pub_event(pub_event.id, person.id)
-                LOGGER.info(f"Removed {person.display_name} from {pub_event}")
+                pub_event = await self.api_client.remove_attendee_from_pub_event(
+                    pub_event.id, person.id
+                )
+
+                if pub_event:
+                    attendee_ids = {a.id for a in pub_event.attendees}
+                    if person.id in attendee_ids:
+                        await user.send(
+                            f"You have removed your interest from the pub on {pub_event.timestamp}, but you are still registered on the pub system. Please log in and RSVP."
+                        )
+                    else:
+                        LOGGER.info(f"Removed {person.display_name} from {pub_event}")
 
     async def handle_pub_event_change(
         self,

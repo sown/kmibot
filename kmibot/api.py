@@ -33,9 +33,11 @@ class PersonWithScoreSchema(PersonSchema):
 class PersonLinkSchema(BaseModel):
     id: UUID
     display_name: str
-    
+
+
 class PersonLinkWithDiscordSchema(PersonLinkSchema):
     discord_id: int | None
+
 
 class ConsequenceLinkSchema(BaseModel):
     id: UUID
@@ -267,16 +269,20 @@ class FerryAPI:
         except httpx.HTTPStatusError as exc:
             LOGGER.exception(exc)
 
-    async def remove_attendee_from_pub_event(self, pub_event_id: UUID, person_id: UUID) -> None:
+    async def remove_attendee_from_pub_event(
+        self, pub_event_id: UUID, person_id: UUID
+    ) -> PubEventSchema | None:
         payload = {
             "person": str(person_id),
         }
         try:
-            await self._request(
+            data = await self._request(
                 "POST", f"v2/pub/events/{pub_event_id}/attendees/remove/", json=payload
             )
+            return PubEventSchema.model_validate(data)
         except httpx.HTTPStatusError as exc:
             LOGGER.exception(exc)
+            return None
 
     async def update_table_for_pub_event(self, pub_event_id: UUID, table_number: int) -> None:
         payload = {
