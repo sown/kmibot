@@ -223,7 +223,6 @@ class FerryAPI:
             "pub": str(pub_id),
             "discord_id": scheduled_event_id,
             "table": None,
-            "attendees": [],
             "created_by": str(created_by),
         }
         await self._request("POST", "v2/pub/events/", json=payload)

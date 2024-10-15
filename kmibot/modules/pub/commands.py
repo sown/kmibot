@@ -123,29 +123,86 @@ class PubCommand(Group):
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
 
-        await self._create_pub_event(
+        scheduled_event = await self._create_pub_event(
             interaction.guild,
             pub,
             pub_time,
             user=interaction.user,
         )
 
+        pub_event = await self.api_client.get_pub_event_by_discord_id(scheduled_event.id)
+
+        if not pub_event:
+            await interaction.followup.send(
+                "Something went wrong when creating the event", ephemeral=True
+            )
+            return
+
+        def _get_display(attendee) -> str:
+            if attendee.discord_id:
+                return f"<@{attendee.discord_id}>"
+            else:
+                return attendee.display_name
+
+        attendee_mentions = " ,".join(_get_display(a) for a in pub_event.attendees)
+
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
 
         LOGGER.info(f"Posting pub info in {pub_channel}")
         formatted_pub_name = get_formatted_pub_name(pub, self.config)
+        message = [
+            "**Pub Next Week**",
+            f"The next pub will be <t:{int(pub_time.timestamp())}:R>",
+            f"It will be held at {formatted_pub_name}",
+            "",
+            "If you are coming, please mark 🔔 interest on the event!",
+        ]
+
+        if attendee_mentions:
+            message += [
+                "",
+                f"The following people have opted-in via AutoPub: {attendee_mentions}",
+            ]
+
         await pub_channel.send(
-            "\n".join(
-                [
-                    "**Pub Next Week**",
-                    f"The next pub will be <t:{int(pub_time.timestamp())}:R>",
-                    f"It will be held at {formatted_pub_name}",
-                    "",
-                    "If you are coming, please mark 🔔 interest on the event!",
-                ],
-            ),
+            "\n".join(message),
             view=get_pub_buttons_view(pub),
+        )
+
+    @command(description="Get the people attending the next pub event")
+    async def attendees(self, interaction: discord.Interaction) -> None:
+        assert interaction.guild
+
+        event = self._get_next_pub_scheduled_event(interaction.guild, ignore_time=True)
+        if event is None:
+            LOGGER.info("No pub exists.")
+            await interaction.response.send_message(
+                "There doesn't appear to be a pub at this time.",
+                ephemeral=True,
+            )
+            return
+
+        pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
+        if pub_event is None:
+            await interaction.response.send_message(
+                "Unable to find the current pub event in the database.",
+                ephemeral=True,
+            )
+            return
+
+        count = len(pub_event.attendees)
+
+        message = [f"There are {count} people coming to the pub on {pub_event.timestamp}:"]
+
+        message += [
+            f"<@{attendee.discord_id}>" if attendee.discord_id else attendee.display_name
+            for attendee in pub_event.attendees
+        ]
+
+        await interaction.response.send_message(
+            "\n".join(message),
+            ephemeral=True,
         )
 
     @command(description="Change the venue for a pub event")  # type: ignore[arg-type]
@@ -306,6 +363,7 @@ class PubCommand(Group):
                     "**Commands**",
                     "/pub next - create the next pub event, if needed",
                     "/pub table <table_no> - add the table number and let others know",
+                    "/pub attendees - get the people coming to the next pub, including AutoPub attendees",
                     "/pub change - move the location of the pub and ping all attendees.",
                 ],
             ),
