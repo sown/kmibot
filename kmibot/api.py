@@ -28,6 +28,7 @@ class PersonSchema(BaseModel):
 
 class PersonWithScoreSchema(PersonSchema):
     current_score: float
+    ferry_sequence: str
 
 
 class PersonLinkSchema(BaseModel):

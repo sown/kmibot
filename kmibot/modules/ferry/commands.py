@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import math
-import random
 from logging import getLogger
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import discord
 from discord.app_commands import Group, command, describe
@@ -19,21 +17,6 @@ LOGGER = getLogger(__name__)
 if TYPE_CHECKING:
     from . import FerryModule
 
-FERRY = "⛴️"
-TRAIN = "🚂"
-
-FRONT_OF_TRAIN = [":bullettrain_front:", ":bullettrain_side:", ":steam_locomotive:", ":light_rail:"]
-TRAIN_PARTS = [":train:", ":railway_car:"]
-
-
-def ferrify(count: int, seed: Any | None = None) -> str:
-    if count == 0:
-        return ""
-
-    ra = random.Random(x=seed)
-    train = [ra.choice(FRONT_OF_TRAIN)] + ra.choices(TRAIN_PARTS, k=count - 1)
-    return "".join(train)
-
 
 class FerryCommand(Group):
     def __init__(self, config: BotConfig, module: FerryModule) -> None:
@@ -44,8 +27,7 @@ class FerryCommand(Group):
     async def get_leaderboard(self) -> str:
         people = await self.ferry_module.api_client.get_leaderboard()  # type: ignore[has-type]
         content = [
-            f"{person.get_display_for_message()} {ferrify(math.ceil(person.current_score), person.id.int)}"
-            for person in people
+            f"{person.get_display_for_message()} {person.ferry_sequence}" for person in people
         ]
         return "\n".join(["Bad people:"] + content)
 
