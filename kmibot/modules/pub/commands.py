@@ -377,5 +377,5 @@ class PubCommand(Group):
         assert interaction.guild is not None
 
         await interaction.response.send_message(
-            "Here you go:\n" + self.config.pub.web_url, epheremal=True
+            "Here you go:\n" + self.config.pub.web_url, ephemeral=True
         )
