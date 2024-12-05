@@ -365,7 +365,18 @@ class PubCommand(Group):
                     "/pub table <table_no> - add the table number and let others know",
                     "/pub attendees - get the people coming to the next pub, including AutoPub attendees",
                     "/pub change - move the location of the pub and ping all attendees.",
+                    "/pub link - get a link to the website"
                 ],
             ),
             ephemeral=True,
+        )
+
+    @command(description="Get a link to the web service") # type: ignore[arg-type]
+    async def link(self, interaction: discord.Interaction) -> None: #noqa: A003
+        LOGGER.info(f"{interaction.user} used /pub link")
+        assert interaction.guild is not None
+
+        await interaction.response.send_message(
+                "Here you go:\n"+self.config.pub.web_url,
+                epheremal=True
         )

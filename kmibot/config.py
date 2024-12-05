@@ -22,7 +22,7 @@ class PubConfig(BaseModel):
     weekday: int
     hour: int
     minute: int = 0
-
+    web_url: str
 
 class FerryConfig(BaseModel):
     api_url: str
