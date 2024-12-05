@@ -24,6 +24,7 @@ class PubConfig(BaseModel):
     minute: int = 0
     web_url: str
 
+
 class FerryConfig(BaseModel):
     api_url: str
     api_key: str
