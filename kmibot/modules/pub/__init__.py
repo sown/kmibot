@@ -122,6 +122,16 @@ class PubModule(Module):
                 view=get_pub_buttons_view(pub),
             )
 
+            if pub_event.announcements:
+                header = [
+                    "**📢 Pub Announcements 📢**",
+                    "",
+                ]
+                await self.pub_channel.send(
+                    "\n".join(header + [f"* {a}" for a in pub_event.announcements]),
+                    view=get_pub_buttons_view(pub),
+                )
+
         if (
             old_event.status is not EventStatus.completed
             and new_event.status is EventStatus.completed

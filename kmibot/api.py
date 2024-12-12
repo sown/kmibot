@@ -97,6 +97,7 @@ class PubEventSchema(BaseModel):
     discord_id: int | None
     table: PubTableSchema | None
     attendees: list[PersonLinkWithDiscordSchema]
+    announcements: list[str]
 
 
 class FerryAPI:
