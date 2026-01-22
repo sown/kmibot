@@ -8,7 +8,7 @@ from kmibot.config import BotConfig
 
 from .utils import event_is_pub, get_formatted_pub_name, get_pub_buttons_view
 from .views import PubView
-from kmibot.api import FerryAPI, PubSchema
+from kmibot.api import FerryAPI, PubBookingAlreadyExistsError, PubSchema
 
 LOGGER = getLogger(__name__)
 
@@ -348,6 +348,76 @@ class PubCommand(Group):
             view=get_pub_buttons_view(pub),
         )
 
+    @command(description="Announce that you've booked a table for the next pub event")
+    @describe(
+        table_size="The table size",
+    )
+    async def booked(self, interaction: discord.Interaction, table_size: int) -> None:
+        assert interaction.guild
+        if table_size <= 0:
+            await interaction.response.send_message(
+                "Sorry, the table size must be at least 1.",
+                ephemeral=True,
+            )
+            return
+
+        event = self._get_next_pub_scheduled_event(interaction.guild, ignore_time=True)
+        if event is None:
+            LOGGER.info("No pub exists.")
+            await interaction.response.send_message(
+                "There doesn't appear to be a pub at this time.",
+                ephemeral=True,
+            )
+            return
+
+        pub_event = await self.api_client.get_pub_event_by_discord_id(event.id)
+        if pub_event is None:
+            await interaction.response.send_message(
+                "Cannot mark the table as booked. Unable to find the current pub event in the database.",
+                ephemeral=True,
+            )
+            return
+
+        pub = await self.api_client.get_pub(pub_event.pub)
+        if pub is None:
+            # This shouldn't happen, unless there's a race condition.
+            await interaction.response.send_message(
+                "Something has gone wrong.",
+                ephemeral=True,
+            )
+            return
+
+        person = await self.api_client.get_person_for_discord_member(interaction.user)
+
+        try:
+            await self.api_client.create_pub_booking(pub_event.id, table_size, person.id)
+        except PubBookingAlreadyExistsError:
+            await interaction.response.send_message(
+                "A table has already been booked for this pub event.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            f"Thanks for booking a table for {table_size}.",
+            ephemeral=True,
+        )
+
+        pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
+        assert isinstance(pub_channel, discord.TextChannel)
+
+        LOGGER.info(f"Posting pub booked info in {pub_channel}")
+        formatted_pub_name = f"{pub.emoji} **{pub.name}** {self.config.pub.supplemental_emoji}"
+        await pub_channel.send(
+            "\n".join(
+                [
+                    "**Pub is booked!**",
+                    f"We are booked for {table_size} people in {formatted_pub_name}",
+                ],
+            ),
+            view=get_pub_buttons_view(pub),
+        )
+
     @command(description="Get info on how to use the /pub command.")  # type: ignore[arg-type]
     async def help(self, interaction: discord.Interaction) -> None:  # noqa: A003
         LOGGER.info(f"{interaction.user} used /pub next")
@@ -362,6 +432,7 @@ class PubCommand(Group):
                     "",
                     "**Commands**",
                     "/pub next - create the next pub event, if needed",
+                    "/pub booked <table_size> - announce that you've booked a table for the next pub",
                     "/pub table <table_no> - add the table number and let others know",
                     "/pub attendees - get the people coming to the next pub, including AutoPub attendees",
                     "/pub change - move the location of the pub and ping all attendees.",

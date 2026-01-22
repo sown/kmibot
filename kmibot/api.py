@@ -90,12 +90,28 @@ class PubTableSchema(BaseModel):
     number: int
 
 
+class PubBookingSchema(BaseModel):
+    id: UUID
+    table_size: int
+    created_by: UUID
+
+
+class PubBookingCreateSchema(BaseModel):
+    table_size: int
+    created_by: UUID
+
+
+class PubBookingAlreadyExistsError(Exception):
+    pass
+
+
 class PubEventSchema(BaseModel):
     id: UUID
     timestamp: datetime
     pub: UUID
     discord_id: int | None
     table: PubTableSchema | None
+    booking: PubBookingSchema | None
     attendees: list[PersonLinkWithDiscordSchema]
     announcements: list[str]
 
@@ -293,3 +309,25 @@ class FerryAPI:
             await self._request("POST", f"v2/pub/events/{pub_event_id}/table/", json=payload)
         except httpx.HTTPStatusError as exc:
             LOGGER.exception(exc)
+
+    async def create_pub_booking(
+        self, pub_event_id: UUID, table_size: int, created_by: UUID
+    ) -> PubBookingSchema:
+        payload = {
+            "table_size": table_size,
+            "created_by": str(created_by),
+        }
+        try:
+            data = await self._request(
+                "POST", f"v2/pub/events/{pub_event_id}/booking/", json=payload
+            )
+            # The API returns a full PubEventSchema, extract the booking
+            event = PubEventSchema.model_validate(data)
+            if event.booking is None:
+                raise ValueError("Booking was created but is None in response")
+            return event.booking
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 409:
+                LOGGER.warning(f"Booking already exists for pub event {pub_event_id}")
+                raise PubBookingAlreadyExistsError()
+            raise
