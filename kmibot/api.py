@@ -113,7 +113,18 @@ class PubEventSchema(BaseModel):
     table: PubTableSchema | None
     booking: PubBookingSchema | None
     attendees: list[PersonLinkWithDiscordSchema]
+    tombstoned_attendees: list[PersonLinkWithDiscordSchema]
     announcements: list[str]
+
+
+class PubEventTombstoneSchema(BaseModel):
+    id: UUID
+    person: UUID
+    pub_event: UUID | None
+
+
+class PubEventTombstoneAlreadyExistsError(Exception):
+    pass
 
 
 class FerryAPI:
@@ -330,4 +341,17 @@ class FerryAPI:
             if exc.response.status_code == 409:
                 LOGGER.warning(f"Booking already exists for pub event {pub_event_id}")
                 raise PubBookingAlreadyExistsError()
+            raise
+
+    async def create_pub_event_tombstone(self, person_id: UUID) -> PubEventTombstoneSchema:
+        payload = {
+            "person": str(person_id),
+        }
+        try:
+            data = await self._request("POST", "v2/pub/events/tombstones/", json=payload)
+            return PubEventTombstoneSchema.model_validate(data)
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 409:
+                LOGGER.warning(f"Tombstone already exists for person {person_id}")
+                raise PubEventTombstoneAlreadyExistsError()
             raise

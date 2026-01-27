@@ -8,7 +8,12 @@ from kmibot.config import BotConfig
 
 from .utils import event_is_pub, get_formatted_pub_name, get_pub_buttons_view
 from .views import PubView
-from kmibot.api import FerryAPI, PubBookingAlreadyExistsError, PubSchema
+from kmibot.api import (
+    FerryAPI,
+    PubBookingAlreadyExistsError,
+    PubEventTombstoneAlreadyExistsError,
+    PubSchema,
+)
 
 LOGGER = getLogger(__name__)
 
@@ -145,6 +150,7 @@ class PubCommand(Group):
                 return attendee.display_name
 
         attendee_mentions = " ,".join(_get_display(a) for a in pub_event.attendees)
+        tombstone_mentions = " ,".join(_get_display(a) for a in pub_event.tombstoned_attendees)
 
         pub_channel = interaction.guild.get_channel(self.config.pub.channel_id)
         assert isinstance(pub_channel, discord.TextChannel)
@@ -163,6 +169,12 @@ class PubCommand(Group):
             message += [
                 "",
                 f"The following people have opted-in via AutoPub: {attendee_mentions}",
+            ]
+
+        if tombstone_mentions:
+            message += [
+                "",
+                f"The following people have opted-out of AutoPub: {tombstone_mentions}",
             ]
 
         await pub_channel.send(
@@ -437,6 +449,7 @@ class PubCommand(Group):
                     "/pub attendees - get the people coming to the next pub, including AutoPub attendees",
                     "/pub change - move the location of the pub and ping all attendees.",
                     "/pub link - get a link to the website",
+                    "/pub autoskip - if autopubbed, you can use this to opt-out of the next pub event",
                 ],
             ),
             ephemeral=True,
@@ -450,3 +463,31 @@ class PubCommand(Group):
         await interaction.response.send_message(
             "Here you go:\n" + self.config.pub.web_url, ephemeral=True
         )
+
+    @command(description="If autopubbed, you can use this to opt-out of the next pub event")
+    async def autoskip(self, interaction: discord.Interaction) -> None:
+        assert interaction.guild
+
+        person = await self.api_client.get_person_for_discord_member(interaction.user)
+
+        try:
+            tombstone = await self.api_client.create_pub_event_tombstone(person.id)
+        except PubEventTombstoneAlreadyExistsError:
+            await interaction.response.send_message(
+                "You have already opted out of the next pub event",
+                ephemeral=True,
+            )
+            return
+
+        if tombstone.pub_event is None:
+            # No next pub event scheduled yet - tombstone will be linked when one is created
+            await interaction.response.send_message(
+                "You've opted out of the next scheduled pub. Your preference will be applied when an event is created.",
+                ephemeral=True,
+            )
+        else:
+            # Next pub event exists - tombstone is linked and RSVP updated
+            await interaction.response.send_message(
+                "You've opted out of the next scheduled pub event.",
+                ephemeral=True,
+            )
